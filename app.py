@@ -53,3 +53,21 @@ with app.app_context():
     
     from routes import main as main_blueprint
     app.register_blueprint(main_blueprint)
+    
+    # Add utility functions to template context
+    from utils import (get_low_stock_products, get_products_by_category, 
+                      get_inventory_value, get_transaction_history, 
+                      format_currency, get_category_value_distribution,
+                      get_transaction_summary)
+    
+    @app.context_processor
+    def utility_processor():
+        return {
+            'get_low_stock_products': get_low_stock_products,
+            'get_products_by_category': get_products_by_category,
+            'get_inventory_value': get_inventory_value,
+            'get_transaction_history': get_transaction_history,
+            'format_currency': format_currency,
+            'get_category_value_distribution': get_category_value_distribution,
+            'get_transaction_summary': get_transaction_summary
+        }
