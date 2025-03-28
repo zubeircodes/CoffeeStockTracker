@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Coffee Shop Inventory{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1 class="display-5 mb-4">Dashboard</h1>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Inventory Summary Card -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+                <div class="d-flex align-items-center justify-content-center mb-3">
+                    <i class="fas fa-boxes fa-3x text-primary"></i>
+                </div>
+                <h5 class="card-title">Total Products</h5>
+                <h2 class="mb-0">{{ product_count }}</h2>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Inventory Value Card -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+                <div class="d-flex align-items-center justify-content-center mb-3">
+                    <i class="fas fa-dollar-sign fa-3x text-success"></i>
+                </div>
+                <h5 class="card-title">Inventory Value</h5>
+                <h2 class="mb-0">${{ "%.2f"|format(total_value) }}</h2>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Vendor Count Card -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+                <div class="d-flex align-items-center justify-content-center mb-3">
+                    <i class="fas fa-truck fa-3x text-info"></i>
+                </div>
+                <h5 class="card-title">Total Vendors</h5>
+                <h2 class="mb-0">{{ vendor_count }}</h2>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Low Stock Card -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+                <div class="d-flex align-items-center justify-content-center mb-3">
+                    <i class="fas fa-exclamation-triangle fa-3x text-warning"></i>
+                </div>
+                <h5 class="card-title">Low Stock Items</h5>
+                <h2 class="mb-0">{{ low_stock_items|length }}</h2>
+                <a href="{{ url_for('main.alerts') }}" class="btn btn-sm btn-outline-warning mt-2">View All</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Low Stock Items -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-bottom">
+                <h5 class="mb-0">Low Stock Items</h5>
+            </div>
+            <div class="card-body">
+                {% if low_stock_items %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Current</th>
+                                <th>Min</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in low_stock_items %}
+                            <tr>
+                                <td>{{ item.name }}</td>
+                                <td>{{ item.quantity }} {{ item.unit }}</td>
+                                <td>{{ item.min_quantity }} {{ item.unit }}</td>
+                                <td>
+                                    <a href="{{ url_for('inventory.edit_product', id=item.id) }}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-success mb-0">
+                    <i class="fas fa-check-circle me-2"></i> No low stock items at the moment!
+                </div>
+                {% endif %}
+                
+                {% if low_stock_items|length > 5 %}
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('main.alerts') }}" class="btn btn-outline-primary">View All</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Transactions -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-bottom">
+                <h5 class="mb-0">Recent Transactions</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_transactions %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Product</th>
+                                <th>Type</th>
+                                <th>Quantity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in recent_transactions %}
+                            <tr>
+                                <td>{{ transaction.transaction_date.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ transaction.product.name }}</td>
+                                <td>
+                                    {% if transaction.transaction_type == 'purchase' %}
+                                    <span class="badge bg-success">Purchase</span>
+                                    {% elif transaction.transaction_type == 'usage' %}
+                                    <span class="badge bg-warning">Usage</span>
+                                    {% else %}
+                                    <span class="badge bg-info">Adjustment</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ transaction.quantity }} {{ transaction.product.unit }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle me-2"></i> No recent transactions.
+                </div>
+                {% endif %}
+                
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('reports.report_dashboard', report_type='transactions') }}" class="btn btn-outline-primary">View All Transactions</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-4">
+    <!-- Inventory by Category -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-bottom">
+                <h5 class="mb-0">Inventory by Category</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="categoryChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-bottom">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-3">
+                    <a href="{{ url_for('inventory.create_product') }}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-2"></i>Add New Product
+                    </a>
+                    <a href="{{ url_for('inventory.add_transaction') }}" class="btn btn-success">
+                        <i class="fas fa-exchange-alt me-2"></i>Record Transaction
+                    </a>
+                    <a href="{{ url_for('inventory.create_vendor') }}" class="btn btn-info">
+                        <i class="fas fa-truck me-2"></i>Add New Vendor
+                    </a>
+                    <a href="{{ url_for('reports.report_dashboard') }}" class="btn btn-warning">
+                        <i class="fas fa-chart-bar me-2"></i>Generate Report
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Category chart data
+    const categoryData = {{ category_data|tojson }};
+    
+    if (categoryData.length > 0) {
+        const labels = categoryData.map(item => item.name);
+        const values = categoryData.map(item => item.count);
+        
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        const categoryChart = new Chart(categoryCtx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: [
+                        '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+                        '#5a5c69', '#6f42c1', '#fd7e14', '#20c997', '#6610f2'
+                    ],
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Products by Category'
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,104 @@
+/* Custom styles for Coffee Shop Inventory Management */
+
+/* Utility Classes */
+.min-vh-80 {
+    min-height: 80vh;
+}
+
+/* Card customizations */
+.card {
+    border-radius: 0.5rem;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+/* Dashboard cards hover effect */
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Table hover effect */
+.table-hover tbody tr:hover {
+    background-color: var(--bs-dark);
+}
+
+/* Status indicators */
+.status-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.status-indicator.in-stock {
+    background-color: var(--bs-success);
+}
+
+.status-indicator.low-stock {
+    background-color: var(--bs-warning);
+}
+
+.status-indicator.out-of-stock {
+    background-color: var(--bs-danger);
+}
+
+/* Vendor contact info styling */
+.vendor-contact {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+.vendor-contact i {
+    margin-right: 0.5rem;
+    width: 1rem;
+    text-align: center;
+}
+
+/* Custom form styles */
+.form-floating > .form-control-plaintext ~ label::after,
+.form-floating > .form-control:focus ~ label::after,
+.form-floating > .form-control:not(:placeholder-shown) ~ label::after,
+.form-floating > .form-select ~ label::after {
+    background-color: transparent;
+}
+
+/* Footer styling */
+.footer {
+    margin-top: 2rem;
+    padding: 1.5rem 0;
+}
+
+/* Fix for bootstrap dark mode in multi-selects */
+select.form-select option {
+    background-color: var(--bs-gray-900);
+    color: var(--bs-light);
+}
+
+/* Transaction badges */
+.badge.bg-success {
+    background-color: var(--bs-success) !important;
+}
+
+.badge.bg-warning {
+    background-color: var(--bs-warning) !important;
+    color: var(--bs-dark);
+}
+
+.badge.bg-info {
+    background-color: var(--bs-info) !important;
+    color: var(--bs-dark);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .table-responsive {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    
+    .display-5 {
+        font-size: 1.8rem;
+    }
+}

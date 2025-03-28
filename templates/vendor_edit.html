@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if vendor %}Edit{% else %}Add{% endif %} Vendor - Coffee Shop Inventory
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="display-5 mb-0">
+        {% if vendor %}Edit{% else %}Add{% endif %} Vendor
+    </h1>
+    <a href="{{ url_for('inventory.vendor_list') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i> Back to Vendors
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <form method="POST" novalidate>
+            {{ form.hidden_tag() }}
+            
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.name.label(class="form-label") }}
+                        {% if form.name.errors %}
+                            {{ form.name(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.name.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.name(class="form-control") }}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.contact_name.label(class="form-label") }}
+                        {% if form.contact_name.errors %}
+                            {{ form.contact_name(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.contact_name.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.contact_name(class="form-control") }}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.email.label(class="form-label") }}
+                        {% if form.email.errors %}
+                            {{ form.email(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.email.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.email(class="form-control") }}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.phone.label(class="form-label") }}
+                        {% if form.phone.errors %}
+                            {{ form.phone(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.phone.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.phone(class="form-control") }}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-12">
+                    <div class="mb-3">
+                        {{ form.address.label(class="form-label") }}
+                        {% if form.address.errors %}
+                            {{ form.address(class="form-control is-invalid", rows=3) }}
+                            <div class="invalid-feedback">
+                                {% for error in form.address.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.address(class="form-control", rows=3) }}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-12">
+                    <div class="mb-3">
+                        {{ form.notes.label(class="form-label") }}
+                        {% if form.notes.errors %}
+                            {{ form.notes(class="form-control is-invalid", rows=3) }}
+                            <div class="invalid-feedback">
+                                {% for error in form.notes.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.notes(class="form-control", rows=3) }}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-12 mt-4">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('inventory.vendor_list') }}" class="btn btn-outline-secondary">Cancel</a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

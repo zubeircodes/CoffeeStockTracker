@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if product %}Edit{% else %}Add{% endif %} Product - Coffee Shop Inventory
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="display-5 mb-0">
+        {% if product %}Edit{% else %}Add{% endif %} Product
+    </h1>
+    <a href="{{ url_for('inventory.inventory_list') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i> Back to Inventory
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <form method="POST" novalidate>
+            {{ form.hidden_tag() }}
+            
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.name.label(class="form-label") }}
+                        {% if form.name.errors %}
+                            {{ form.name(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.name.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.name(class="form-control") }}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.sku.label(class="form-label") }}
+                        {% if form.sku.errors %}
+                            {{ form.sku(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.sku.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.sku(class="form-control") }}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-12">
+                    <div class="mb-3">
+                        {{ form.description.label(class="form-label") }}
+                        {% if form.description.errors %}
+                            {{ form.description(class="form-control is-invalid", rows=3) }}
+                            <div class="invalid-feedback">
+                                {% for error in form.description.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.description(class="form-control", rows=3) }}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        {{ form.quantity.label(class="form-label") }}
+                        {% if form.quantity.errors %}
+                            {{ form.quantity(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.quantity.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.quantity(class="form-control") }}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        {{ form.min_quantity.label(class="form-label") }}
+                        {% if form.min_quantity.errors %}
+                            {{ form.min_quantity(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.min_quantity.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.min_quantity(class="form-control") }}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        {{ form.unit.label(class="form-label") }}
+                        {% if form.unit.errors %}
+                            {{ form.unit(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.unit.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.unit(class="form-control") }}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        {{ form.price.label(class="form-label") }}
+                        {% if form.price.errors %}
+                            {{ form.price(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.price.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.price(class="form-control") }}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        {{ form.category_id.label(class="form-label") }}
+                        {% if form.category_id.errors %}
+                            {{ form.category_id(class="form-select is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.category_id.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.category_id(class="form-select") }}
+                        {% endif %}
+                        <small class="form-text text-muted">
+                            <a href="{{ url_for('inventory.create_category') }}" target="_blank">Add New Category</a>
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        {{ form.vendor_id.label(class="form-label") }}
+                        {% if form.vendor_id.errors %}
+                            {{ form.vendor_id(class="form-select is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.vendor_id.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.vendor_id(class="form-select") }}
+                        {% endif %}
+                        <small class="form-text text-muted">
+                            <a href="{{ url_for('inventory.create_vendor') }}" target="_blank">Add New Vendor</a>
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="col-12 mt-4">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('inventory.inventory_list') }}" class="btn btn-outline-secondary">Cancel</a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

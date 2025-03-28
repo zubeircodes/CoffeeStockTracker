@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Add Transaction - Coffee Shop Inventory{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="display-5 mb-0">Record Inventory Transaction</h1>
+    <a href="{{ url_for('inventory.inventory_list') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i> Back to Inventory
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <form method="POST" novalidate>
+            {{ form.hidden_tag() }}
+            
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.product_id.label(class="form-label") }}
+                        {% if form.product_id.errors %}
+                            {{ form.product_id(class="form-select is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.product_id.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.product_id(class="form-select") }}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.transaction_type.label(class="form-label") }}
+                        {% if form.transaction_type.errors %}
+                            {{ form.transaction_type(class="form-select is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.transaction_type.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.transaction_type(class="form-select") }}
+                        {% endif %}
+                        <small class="form-text text-muted" id="transaction-help">
+                            Select the type of transaction you want to record.
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.quantity.label(class="form-label") }}
+                        {% if form.quantity.errors %}
+                            {{ form.quantity(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.quantity.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.quantity(class="form-control") }}
+                        {% endif %}
+                        <small class="form-text text-muted" id="quantity-help">
+                            Enter the quantity for this transaction.
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.transaction_date.label(class="form-label") }}
+                        {% if form.transaction_date.errors %}
+                            {{ form.transaction_date(class="form-control is-invalid", type="date") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.transaction_date.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.transaction_date(class="form-control", type="date") }}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-12">
+                    <div class="mb-3">
+                        {{ form.notes.label(class="form-label") }}
+                        {% if form.notes.errors %}
+                            {{ form.notes(class="form-control is-invalid", rows=3) }}
+                            <div class="invalid-feedback">
+                                {% for error in form.notes.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.notes(class="form-control", rows=3) }}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-12 mt-4">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('inventory.inventory_list') }}" class="btn btn-outline-secondary">Cancel</a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const transactionTypeSelect = document.getElementById('transaction_type');
+    const quantityHelp = document.getElementById('quantity-help');
+    const transactionHelp = document.getElementById('transaction-help');
+    
+    function updateHelpText() {
+        const selectedType = transactionTypeSelect.value;
+        
+        if (selectedType === 'purchase') {
+            transactionHelp.textContent = 'Select "Purchase" when receiving new stock from vendors.';
+            quantityHelp.textContent = 'Enter the quantity being added to inventory.';
+        } else if (selectedType === 'usage') {
+            transactionHelp.textContent = 'Select "Usage" when consuming or selling items from inventory.';
+            quantityHelp.textContent = 'Enter the quantity being removed from inventory.';
+        } else if (selectedType === 'adjustment') {
+            transactionHelp.textContent = 'Select "Adjustment" for inventory corrections or counts.';
+            quantityHelp.textContent = 'Enter the new correct total quantity (not the difference).';
+        }
+    }
+    
+    // Update on page load
+    updateHelpText();
+    
+    // Update when selection changes
+    transactionTypeSelect.addEventListener('change', updateHelpText);
+});
+</script>
+{% endblock %}

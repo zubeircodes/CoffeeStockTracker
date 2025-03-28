@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Vendors - Coffee Shop Inventory{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="display-5 mb-0">Vendors</h1>
+    <a href="{{ url_for('inventory.create_vendor') }}" class="btn btn-primary">
+        <i class="fas fa-plus-circle me-1"></i> Add Vendor
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        {% if vendors %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Contact Person</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Products</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for vendor in vendors %}
+                    <tr>
+                        <td>{{ vendor.name }}</td>
+                        <td>{{ vendor.contact_name or '-' }}</td>
+                        <td>
+                            {% if vendor.email %}
+                            <a href="mailto:{{ vendor.email }}">{{ vendor.email }}</a>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if vendor.phone %}
+                            <a href="tel:{{ vendor.phone }}">{{ vendor.phone }}</a>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>{{ vendor.products|length }}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('inventory.edit_vendor', id=vendor.id) }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ vendor.id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Delete Confirmation Modal -->
+                            <div class="modal fade" id="deleteModal{{ vendor.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ vendor.id }}" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="deleteModalLabel{{ vendor.id }}">Confirm Delete</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            Are you sure you want to delete <strong>{{ vendor.name }}</strong>? This action cannot be undone.
+                                            
+                                            {% if vendor.products|length > 0 %}
+                                            <div class="alert alert-warning mt-3">
+                                                <i class="fas fa-exclamation-triangle me-1"></i> This vendor is linked to {{ vendor.products|length }} products. You cannot delete it while it's in use.
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <form action="{{ url_for('inventory.delete_vendor', id=vendor.id) }}" method="POST">
+                                                <button type="submit" class="btn btn-danger" {% if vendor.products|length > 0 %}disabled{% endif %}>Delete</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info m-3">
+            <i class="fas fa-info-circle me-2"></i> No vendors found. Click "Add Vendor" to add some!
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Coffee Shop Inventory - Welcome{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h1 class="display-4 mb-4">
+                <i class="fas fa-mug-hot me-2"></i> Coffee Shop Inventory
+            </h1>
+            <p class="lead mb-5">A streamlined inventory management system for your coffee shop business.</p>
+            
+            <div class="row g-4 py-3">
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="fas fa-boxes fa-3x mb-3 text-primary"></i>
+                            <h5 class="card-title">Inventory Tracking</h5>
+                            <p class="card-text">Easily track your coffee beans, milk, syrups, and other essential supplies.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="fas fa-bell fa-3x mb-3 text-warning"></i>
+                            <h5 class="card-title">Low Stock Alerts</h5>
+                            <p class="card-text">Get notified when your inventory items are running low.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="fas fa-chart-bar fa-3x mb-3 text-success"></i>
+                            <h5 class="card-title">Simple Reports</h5>
+                            <p class="card-text">Generate weekly inventory status reports to stay on top of your business.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-5">
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg px-4 me-2">
+                    <i class="fas fa-tachometer-alt me-2"></i> Go to Dashboard
+                </a>
+                {% else %}
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg px-4 me-2">
+                    <i class="fas fa-sign-in-alt me-2"></i> Log In
+                </a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-outline-secondary btn-lg px-4">
+                    <i class="fas fa-user-plus me-2"></i> Register
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
