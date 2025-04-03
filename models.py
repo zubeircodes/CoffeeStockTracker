@@ -87,3 +87,18 @@ class InventoryTransaction(db.Model):
     
     def __repr__(self):
         return f'<Transaction {self.id} {self.transaction_type}>'
+
+class Sale(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    quantity = db.Column(db.Float, nullable=False)
+    unit_price = db.Column(db.Float, nullable=False)
+    total = db.Column(db.Float, nullable=False)
+    sale_date = db.Column(db.DateTime, nullable=False)
+    imported_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    product = db.relationship('Product', backref='sales')
+    
+    def __repr__(self):
+        return f'<Sale {self.id} {self.product.name if self.product else "Unknown"}>'

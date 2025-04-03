@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Upload Sales Data</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="alert alert-info">
+                            <h5>CSV Format Requirements</h5>
+                            <p>Your CSV file should have the following columns:</p>
+                            <ul>
+                                <li><strong>product_id</strong> - The ID of the product in the system</li>
+                                <li><strong>quantity</strong> - Number of units sold</li>
+                                <li><strong>unit_price</strong> - Price per unit</li>
+                                <li><strong>total</strong> - Total sales amount (quantity × unit_price)</li>
+                                <li><strong>date</strong> - Sale date in YYYY-MM-DD format</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.csv_file.label(class="form-label") }}
+                            {{ form.csv_file(class="form-control") }}
+                            {% if form.csv_file.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.csv_file.errors %}
+                                <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mt-4 shadow">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Sample CSV Format</h5>
+                </div>
+                <div class="card-body">
+                    <pre class="bg-light p-3 rounded">product_id,quantity,unit_price,total,date
+1,2,3.50,7.00,2025-04-01
+2,1,4.25,4.25,2025-04-01
+3,3,2.75,8.25,2025-04-02</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

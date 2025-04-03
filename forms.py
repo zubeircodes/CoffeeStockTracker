@@ -1,4 +1,5 @@
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField
 from wtforms import SelectField, FloatField, HiddenField, DateField, EmailField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional, ValidationError
@@ -70,8 +71,16 @@ class ReportForm(FlaskForm):
     report_type = SelectField('Report Type', 
                             choices=[('low_stock', 'Low Stock Items'), 
                                      ('inventory_value', 'Inventory Value'), 
-                                     ('transactions', 'Recent Transactions')],
+                                     ('transactions', 'Recent Transactions'),
+                                     ('sales', 'Sales Report')],
                             validators=[DataRequired()])
     start_date = DateField('Start Date', format='%Y-%m-%d', validators=[Optional()])
     end_date = DateField('End Date', format='%Y-%m-%d', validators=[Optional()])
     submit = SubmitField('Generate Report')
+    
+class SalesUploadForm(FlaskForm):
+    csv_file = FileField('CSV File', validators=[
+        DataRequired(),
+        FileAllowed(['csv'], 'CSV files only!')
+    ])
+    submit = SubmitField('Upload Sales Data')

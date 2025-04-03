@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Sales Report</h1>
+        <div>
+            <button onclick="exportTableToCSV('#salesTable', 'sales_report.csv')" class="btn btn-success btn-sm">
+                <i class="fas fa-file-csv"></i> Export to CSV
+            </button>
+            <a href="{{ url_for('sales.sales_report') }}" class="btn btn-secondary btn-sm">
+                <i class="fas fa-redo"></i> New Report
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Sales Report</h6>
+            <div>
+                {% if start_date %}
+                <span class="badge bg-secondary">From: {{ start_date.strftime('%Y-%m-%d') }}</span>
+                {% endif %}
+                {% if end_date %}
+                <span class="badge bg-secondary">To: {{ end_date.strftime('%Y-%m-%d') }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="salesTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Date</th>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sale in sales %}
+                        <tr>
+                            <td>{{ sale.id }}</td>
+                            <td>{{ sale.sale_date.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ sale.product.name }}</td>
+                            <td>{{ sale.quantity }}</td>
+                            <td>{{ format_currency(sale.unit_price) }}</td>
+                            <td>{{ format_currency(sale.total) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th colspan="5" class="text-end">Total:</th>
+                            <th>{{ format_currency(sales|sum(attribute='total')) }}</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% endblock %}
