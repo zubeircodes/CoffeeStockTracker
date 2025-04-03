@@ -54,10 +54,10 @@
                 <div id="recurring-options" class="mb-3 card p-3" style="display: none;">
                     <h6 class="mb-3">Recurring Days</h6>
                     <div class="d-flex flex-wrap gap-2">
-                        {% for subfield in form.recurring_days %}
+                        {% for value, label in form.recurring_days.choices %}
                         <div class="form-check form-check-inline">
-                            {{ subfield(class="form-check-input") }}
-                            {{ subfield.label(class="form-check-label") }}
+                            <input class="form-check-input" type="checkbox" id="recurring_day_{{ value }}" name="recurring_days" value="{{ value }}">
+                            <label class="form-check-label" for="recurring_day_{{ value }}">{{ label }}</label>
                         </div>
                         {% endfor %}
                     </div>

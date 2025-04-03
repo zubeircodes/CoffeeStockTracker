@@ -161,13 +161,16 @@ def create_shift():
     form.staff_id.choices = [(s.id, s.full_name) for s in Staff.query.filter_by(is_active=True).all()]
     
     if form.validate_on_submit():
+        # Get recurring days from form data (request.form is a MultiDict that can have multiple values for the same key)
+        recurring_days = request.form.getlist('recurring_days')
+        
         shift = Shift(
             staff_id=form.staff_id.data,
             title=form.title.data,
             start_time=form.start_time.data,
             end_time=form.end_time.data,
             is_recurring=form.is_recurring.data,
-            recurring_days=','.join(form.recurring_days.data) if form.recurring_days.data else None,
+            recurring_days=','.join(recurring_days) if recurring_days else None,
             notes=form.notes.data
         )
         
@@ -200,12 +203,15 @@ def edit_shift(id):
         form.recurring_days.data = shift.recurring_days.split(',')
     
     if form.validate_on_submit():
+        # Get recurring days from form data
+        recurring_days = request.form.getlist('recurring_days')
+        
         shift.staff_id = form.staff_id.data
         shift.title = form.title.data
         shift.start_time = form.start_time.data
         shift.end_time = form.end_time.data
         shift.is_recurring = form.is_recurring.data
-        shift.recurring_days = ','.join(form.recurring_days.data) if form.recurring_days.data else None
+        shift.recurring_days = ','.join(recurring_days) if recurring_days else None
         shift.notes = form.notes.data
         
         db.session.commit()
