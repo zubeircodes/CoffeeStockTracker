@@ -9,6 +9,50 @@
     </div>
 </div>
 
+<!-- Revenue Summary Section -->
+{% if has_sales_data %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Revenue Overview</h5>
+                    <a href="{{ url_for('sales.revenue_dashboard') }}" class="btn btn-sm btn-outline-primary">View Details</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center mb-3">
+                            <h6 class="text-muted">Total Revenue</h6>
+                            <h2 class="mb-0">${{ "%.2f"|format(total_revenue) }}</h2>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center mb-3">
+                            <h6 class="text-muted">This Month</h6>
+                            <h2 class="mb-0">${{ "%.2f"|format(monthly_revenue) }}</h2>
+                            {% if revenue_change_percent != 0 %}
+                            <small class="{% if revenue_change_percent > 0 %}text-success{% else %}text-danger{% endif %}">
+                                <i class="fas fa-{% if revenue_change_percent > 0 %}arrow-up{% else %}arrow-down{% endif %} me-1"></i>
+                                {{ "%.1f"|format(revenue_change_percent|abs) }}% from last month
+                            </small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center mb-3">
+                            <h6 class="text-muted">Last Month</h6>
+                            <h2 class="mb-0">${{ "%.2f"|format(previous_month_revenue) }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="row g-4 mb-4">
     <!-- Inventory Summary Card -->
     <div class="col-md-6 col-lg-3">
@@ -166,6 +210,62 @@
     </div>
 </div>
 
+{% if has_sales_data %}
+<div class="row g-4 mt-4">
+    <!-- Revenue Chart -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Revenue Trend</h5>
+                    <a href="{{ url_for('sales.revenue_dashboard') }}" class="btn btn-sm btn-outline-primary">View Details</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Selling Products -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-bottom">
+                <h5 class="mb-0">Top Selling Products</h5>
+            </div>
+            <div class="card-body">
+                {% if top_selling_products %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Quantity Sold</th>
+                                <th>Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in top_selling_products %}
+                            <tr>
+                                <td>{{ product.name }}</td>
+                                <td>{{ "%.1f"|format(product.quantity_sold) }}</td>
+                                <td>${{ "%.2f"|format(product.revenue) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle me-2"></i> No sales data available yet.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="row g-4 mt-4">
     <!-- Inventory by Category -->
     <div class="col-lg-6">
@@ -196,6 +296,11 @@
                     <a href="{{ url_for('inventory.create_vendor') }}" class="btn btn-info">
                         <i class="fas fa-truck me-2"></i>Add New Vendor
                     </a>
+                    {% if has_sales_data == false %}
+                    <a href="{{ url_for('sales.upload_sales') }}" class="btn btn-secondary">
+                        <i class="fas fa-upload me-2"></i>Upload Sales Data
+                    </a>
+                    {% endif %}
                     <a href="{{ url_for('reports.report_dashboard') }}" class="btn btn-warning">
                         <i class="fas fa-chart-bar me-2"></i>Generate Report
                     </a>
@@ -243,6 +348,74 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
+    }
+    
+    // Initialize Revenue Chart if it exists
+    const revenueChartEl = document.getElementById('revenueChart');
+    if (revenueChartEl) {
+        const months = {{ revenue_months|tojson }};
+        const values = {{ revenue_values|tojson }};
+        
+        if (months.length > 0) {
+            const revenueCtx = revenueChartEl.getContext('2d');
+            const revenueChart = new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Monthly Revenue',
+                        backgroundColor: "rgba(78, 115, 223, 0.05)",
+                        borderColor: "rgba(78, 115, 223, 1)",
+                        pointRadius: 3,
+                        pointBackgroundColor: "rgba(78, 115, 223, 1)",
+                        pointBorderColor: "rgba(78, 115, 223, 1)",
+                        pointHoverRadius: 3,
+                        pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
+                        pointHoverBorderColor: "rgba(78, 115, 223, 1)",
+                        pointHitRadius: 10,
+                        pointBorderWidth: 2,
+                        data: values,
+                        lineTension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += new Intl.NumberFormat('en-US', {
+                                            style: 'currency',
+                                            currency: 'USD'
+                                        }).format(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
     }
 });
 </script>
