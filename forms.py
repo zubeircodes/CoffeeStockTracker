@@ -121,6 +121,6 @@ class ShiftForm(FlaskForm):
         ('4', 'Thursday'),
         ('5', 'Friday'),
         ('6', 'Saturday')
-    ])
+    ], validators=[Optional()])  # Making this field optional
     notes = TextAreaField('Notes')
     submit = SubmitField('Save Shift')
