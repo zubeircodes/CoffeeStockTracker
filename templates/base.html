@@ -35,18 +35,8 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if '/inventory' in request.path and not '/vendors' in request.path and not '/categories' in request.path %}active{% endif %}" href="{{ url_for('inventory.inventory_list') }}">
+                            <a class="nav-link {% if '/inventory' in request.path %}active{% endif %}" href="{{ url_for('inventory.inventory_list') }}">
                                 <i class="fas fa-boxes me-1"></i> Inventory
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if '/vendors' in request.path %}active{% endif %}" href="{{ url_for('inventory.vendor_list') }}">
-                                <i class="fas fa-truck me-1"></i> Vendors
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if '/categories' in request.path %}active{% endif %}" href="{{ url_for('inventory.category_list') }}">
-                                <i class="fas fa-tags me-1"></i> Categories
                             </a>
                         </li>
                         <li class="nav-item">
