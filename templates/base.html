@@ -54,6 +54,28 @@
                                 <i class="fas fa-chart-bar me-1"></i> Reports
                             </a>
                         </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle {% if '/revenue' in request.path %}active{% endif %}" href="#" id="revenueDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-cash-register me-1"></i> Revenue
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="revenueDropdown">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('revenue.revenue_dashboard') }}">
+                                        <i class="fas fa-chart-line me-1"></i> Revenue Dashboard
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('revenue.upload_sales') }}">
+                                        <i class="fas fa-file-upload me-1"></i> Upload Sales Data
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('revenue.sales_list') }}">
+                                        <i class="fas fa-list me-1"></i> Sales Transactions
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link {% if '/alerts' in request.path %}active{% endif %}" href="{{ url_for('main.alerts') }}">
                                 <i class="fas fa-bell me-1"></i> Alerts

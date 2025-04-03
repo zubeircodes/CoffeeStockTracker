@@ -1,0 +1,344 @@
+{% extends "base.html" %}
+
+{% block title %}Revenue Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+.card-revenue {
+    border-left: 4px solid var(--bs-primary);
+}
+.card-transactions {
+    border-left: 4px solid var(--bs-info);
+}
+.card-average {
+    border-left: 4px solid var(--bs-success);
+}
+.summary-icon {
+    font-size: 2.5rem;
+    opacity: 0.3;
+}
+.chart-container {
+    position: relative;
+    height: 300px;
+    max-width: 100%;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col">
+        <h1 class="h3 mb-0">Revenue Dashboard</h1>
+        <p class="text-muted">Track sales performance and revenue metrics</p>
+    </div>
+    <div class="col-md-auto">
+        <a href="{{ url_for('revenue.upload_sales') }}" class="btn btn-primary">
+            <i class="fas fa-file-upload me-1"></i> Upload Sales Data
+        </a>
+    </div>
+</div>
+
+<!-- Filter Form -->
+<div class="card mb-4">
+    <div class="card-header bg-dark">
+        <h5 class="mb-0">Filter Options</h5>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('revenue.revenue_dashboard') }}" class="row g-3">
+            <div class="col-md-3">
+                {{ form.report_period.label(class="form-label") }}
+                {{ form.report_period(class="form-select") }}
+            </div>
+            <div class="col-md-3">
+                {{ form.start_date.label(class="form-label") }}
+                {{ form.start_date(class="form-control", type="date") }}
+            </div>
+            <div class="col-md-3">
+                {{ form.end_date.label(class="form-label") }}
+                {{ form.end_date(class="form-control", type="date") }}
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- KPI cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card card-revenue h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted text-uppercase mb-2">Total Revenue</h6>
+                        <h2 class="mb-0">${{ "%.2f"|format(total_revenue) }}</h2>
+                    </div>
+                    <div class="summary-icon">
+                        <i class="fas fa-dollar-sign text-primary"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="text-muted small">
+                        Period: {{ start_date.strftime('%b %d') }} - {{ end_date.strftime('%b %d, %Y') }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card card-transactions h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted text-uppercase mb-2">Sales Transactions</h6>
+                        <h2 class="mb-0">{{ transaction_count }}</h2>
+                    </div>
+                    <div class="summary-icon">
+                        <i class="fas fa-shopping-cart text-info"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="text-muted small">
+                        {% if transaction_count > 0 %}
+                        Avg. {{ (total_revenue / transaction_count)|round(2) }} per transaction
+                        {% else %}
+                        No transactions in this period
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card card-average h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted text-uppercase mb-2">Average Sale</h6>
+                        <h2 class="mb-0">${{ "%.2f"|format(avg_sale) }}</h2>
+                    </div>
+                    <div class="summary-icon">
+                        <i class="fas fa-cash-register text-success"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="text-muted small">
+                        Based on {{ transaction_count }} transactions
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="row mb-4">
+    <!-- Revenue Trend Chart -->
+    <div class="col-lg-8">
+        <div class="card h-100">
+            <div class="card-header bg-dark d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Revenue Trend</h5>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-secondary" data-period="7">7D</button>
+                    <button type="button" class="btn btn-outline-secondary active" data-period="30">30D</button>
+                    <button type="button" class="btn btn-outline-secondary" data-period="90">90D</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Payment Method Breakdown -->
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header bg-dark">
+                <h5 class="mb-0">Payment Methods</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="paymentChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Products & Recent Transactions -->
+<div class="row">
+    <!-- Top Products -->
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header bg-dark d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Top Products</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th class="text-center">Quantity</th>
+                                <th class="text-end">Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in top_products %}
+                            <tr>
+                                <td>{{ product.product_name }}</td>
+                                <td class="text-center">{{ product.total_quantity|round(1) }}</td>
+                                <td class="text-end">${{ "%.2f"|format(product.total_revenue) }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center py-3">No products sold in this period</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Products Chart -->
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header bg-dark">
+                <h5 class="mb-0">Product Revenue Breakdown</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="productsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Transactions -->
+<div class="card mb-4">
+    <div class="card-header bg-dark d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Recent Transactions</h5>
+        <a href="{{ url_for('revenue.sales_list') }}" class="btn btn-sm btn-outline-secondary">View All</a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date</th>
+                        <th>Payment</th>
+                        <th class="text-end">Amount</th>
+                        <th class="text-center">Items</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in sales[:10] %}
+                    <tr>
+                        <td>{{ sale.order_id }}</td>
+                        <td>{{ sale.sale_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            <span class="badge bg-secondary">{{ sale.payment_type.name }}</span>
+                        </td>
+                        <td class="text-end">${{ "%.2f"|format(sale.total_amount) }}</td>
+                        <td class="text-center">{{ sale.item_count }}</td>
+                        <td class="text-end">
+                            <a href="{{ url_for('revenue.sale_detail', id=sale.id) }}" class="btn btn-sm btn-outline-primary">
+                                Details
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-3">No transactions in this period</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/chart-config.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Revenue trend chart
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        const revenueChart = createInventoryTrendChart(
+            revenueCtx, 
+            {{ chart_labels|tojson }},
+            [{
+                label: 'Daily Revenue',
+                data: {{ chart_data|tojson }},
+                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                tension: 0.4
+            }]
+        );
+        
+        // Payment methods chart
+        const paymentCtx = document.getElementById('paymentChart').getContext('2d');
+        const paymentLabels = {{ payment_labels|tojson }};
+        const paymentData = {{ payment_values|tojson }};
+        const paymentChart = createDoughnutChart(paymentCtx, paymentLabels, paymentData, 'Payment Methods');
+        
+        // Top products chart
+        const productsCtx = document.getElementById('productsChart').getContext('2d');
+        const productLabels = {{ product_labels|tojson }};
+        const productData = {{ product_data|tojson }};
+        const productsChart = createDoughnutChart(productsCtx, productLabels, productData, 'Revenue by Product');
+        
+        // Time period selectors
+        document.querySelectorAll('.btn-group [data-period]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const days = parseInt(this.dataset.period);
+                
+                // Update active state
+                document.querySelectorAll('.btn-group [data-period]').forEach(b => {
+                    b.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // Fetch data for this period
+                fetch(`/api/revenue-data?days=${days}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Update chart
+                        updateChartData(revenueChart, data.labels, [{
+                            label: 'Daily Revenue',
+                            data: data.revenue,
+                            borderColor: '#0d6efd',
+                            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                            tension: 0.4
+                        }]);
+                    });
+            });
+        });
+        
+        // Show/hide date inputs based on period selection
+        const periodSelect = document.getElementById('report_period');
+        const dateInputs = document.querySelectorAll('.form-control[type="date"]');
+        
+        function toggleDateInputs() {
+            const isCustom = periodSelect.value === 'custom';
+            dateInputs.forEach(input => {
+                input.parentElement.style.display = isCustom ? 'block' : 'none';
+            });
+        }
+        
+        periodSelect.addEventListener('change', toggleDateInputs);
+        toggleDateInputs(); // Initial state
+    });
+</script>
+{% endblock %}

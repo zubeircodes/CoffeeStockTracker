@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Sales Transactions{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col">
+        <h1 class="h3 mb-0">Sales Transactions</h1>
+        <p class="text-muted">View all sales transactions</p>
+    </div>
+    <div class="col-md-auto">
+        <a href="{{ url_for('revenue.revenue_dashboard') }}" class="btn btn-outline-secondary me-2">
+            <i class="fas fa-chart-line me-1"></i> Dashboard
+        </a>
+        <a href="{{ url_for('revenue.upload_sales') }}" class="btn btn-primary">
+            <i class="fas fa-file-upload me-1"></i> Upload Sales
+        </a>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header bg-dark d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">All Sales Transactions</h5>
+        <button class="btn btn-sm btn-outline-secondary" onclick="exportTableToCSV('salesTable', 'sales_transactions.csv')">
+            <i class="fas fa-download me-1"></i> Export CSV
+        </button>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="salesTable">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date</th>
+                        <th>Payment</th>
+                        <th class="text-end">Amount</th>
+                        <th class="text-center">Items</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in sales.items %}
+                    <tr>
+                        <td>{{ sale.order_id }}</td>
+                        <td>{{ sale.sale_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            <span class="badge bg-secondary">{{ sale.payment_type.name }}</span>
+                        </td>
+                        <td class="text-end">${{ "%.2f"|format(sale.total_amount) }}</td>
+                        <td class="text-center">{{ sale.item_count }}</td>
+                        <td class="text-end">
+                            <a href="{{ url_for('revenue.sale_detail', id=sale.id) }}" class="btn btn-sm btn-outline-primary">
+                                Details
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-3">No sales transactions found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Pagination -->
+    {% if sales.pages > 1 %}
+    <div class="card-footer">
+        <nav aria-label="Sales pagination">
+            <ul class="pagination justify-content-center mb-0">
+                {% if sales.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('revenue.sales_list', page=sales.prev_num) }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link" aria-hidden="true">&laquo;</span>
+                </li>
+                {% endif %}
+                
+                {% for page_num in sales.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                    {% if page_num %}
+                        {% if page_num == sales.page %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('revenue.sales_list', page=page_num) }}">{{ page_num }}</a>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">…</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if sales.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('revenue.sales_list', page=sales.next_num) }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link" aria-hidden="true">&raquo;</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize any components if needed
+});
+</script>
+{% endblock %}
