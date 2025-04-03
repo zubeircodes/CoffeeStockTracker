@@ -14,14 +14,15 @@
                         
                         <div class="alert alert-info">
                             <h5>CSV Format Requirements</h5>
-                            <p>Your CSV file should have the following columns:</p>
-                            <ul>
+                            <p>Your CSV file should have data in this order:</p>
+                            <ol>
                                 <li><strong>product_id</strong> - The ID of the product in the system</li>
                                 <li><strong>quantity</strong> - Number of units sold</li>
                                 <li><strong>unit_price</strong> - Price per unit</li>
                                 <li><strong>total</strong> - Total sales amount (quantity × unit_price)</li>
                                 <li><strong>date</strong> - Sale date in YYYY-MM-DD format</li>
-                            </ul>
+                            </ol>
+                            <p class="mb-0"><i class="fas fa-info-circle me-1"></i> <strong>Note:</strong> The system will automatically detect if your file includes column headers. Both formats are acceptable.</p>
                         </div>
                         
                         <div class="mb-3">

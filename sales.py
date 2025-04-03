@@ -106,8 +106,28 @@ def upload_sales():
             
             stream = StringIO(file_content)
             
-            # Parse CSV content
-            csv_data = csv.DictReader(stream)
+            # Check if the first line might be data rather than headers
+            # by peeking at the first line
+            stream.seek(0)
+            first_line = stream.readline().strip()
+            stream.seek(0)  # Reset to beginning of file
+            
+            # Detect whether the file has headers or not
+            has_headers = False
+            if 'product_id' in first_line.lower() or 'date' in first_line.lower():
+                has_headers = True
+                print("CSV file appears to have headers")
+            else:
+                print("CSV file does not appear to have headers")
+            
+            # Define fieldnames for CSV reader
+            fieldnames = ['product_id', 'quantity', 'unit_price', 'total', 'date']
+            
+            # Parse CSV content with or without headers
+            if has_headers:
+                csv_data = csv.DictReader(stream)
+            else:
+                csv_data = csv.DictReader(stream, fieldnames=fieldnames)
             
             # Import the data
             records_added = 0
@@ -130,6 +150,8 @@ def upload_sales():
                     # Check if product exists
                     product_id = int(row.get('product_id', 0))
                     product = Product.query.get(product_id)
+                    
+                    print(f"Processing row with product_id: {product_id}")
                     
                     if not product:
                         print(f"Product not found: {product_id}")
