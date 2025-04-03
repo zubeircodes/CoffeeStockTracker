@@ -70,9 +70,27 @@ def revenue_dashboard():
             Product.category_id,
             func.sum(Sale.total).label('revenue')
         ).join(Sale).group_by(Product.category_id).all()
+        
+        # Prepare data for direct rendering to charts
+        category_labels = []
+        category_data = []
+        
+        # Get category names for each product category_id
+        for item in category_revenue:
+            product = Product.query.filter_by(category_id=item.category_id).first()
+            if product and product.category:
+                category_name = product.category.name
+            else:
+                category_name = 'Uncategorized'
+            
+            category_labels.append(category_name)
+            category_data.append(float(item.revenue))
     else:
         # If no sales data, display a message
         flash('No sales data available. Please upload sales data to see revenue insights.', 'info')
+        # Initialize category data as empty for template
+        category_labels = []
+        category_data = []
     
     return render_template('revenue_dashboard.html',
                            title='Revenue Dashboard',
@@ -80,7 +98,9 @@ def revenue_dashboard():
                            months=months,
                            revenue_data=revenue_data,
                            top_products=top_products,
-                           category_revenue=category_revenue)
+                           category_revenue=category_revenue,
+                           category_labels=category_labels,
+                           category_data=category_data)
 
 @sales.route('/sales_upload', methods=['GET', 'POST'])
 @login_required

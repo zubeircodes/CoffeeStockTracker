@@ -189,33 +189,39 @@
                 });
             }
             
-            // Load category data via AJAX
+            // Load category data from server-rendered data
             const categoryCtx = document.getElementById('categoryChart');
             if (categoryCtx) {
-                fetch('/api/sales/category')
-                    .then(response => response.json())
-                    .then(data => {
-                        new Chart(categoryCtx.getContext('2d'), {
-                            type: 'doughnut',
-                            data: {
-                                labels: data.labels,
-                                datasets: [{
-                                    data: data.datasets[0].data,
-                                    backgroundColor: data.datasets[0].backgroundColor,
-                                    hoverOffset: 4
-                                }]
-                            },
-                            options: {
-                                maintainAspectRatio: false,
-                                plugins: {
-                                    legend: {
-                                        position: 'bottom'
-                                    }
+                const categoryLabels = {{ category_labels|tojson }};
+                const categoryData = {{ category_data|tojson }};
+                
+                if (categoryLabels.length > 0) {
+                    new Chart(categoryCtx.getContext('2d'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: categoryLabels,
+                            datasets: [{
+                                data: categoryData,
+                                backgroundColor: [
+                                    '#4e73df', '#1cc88a', '#36b9cc',
+                                    '#f6c23e', '#e74a3b', '#858796',
+                                    '#5a5c69', '#6610f2', '#6f42c1'
+                                ],
+                                hoverOffset: 4
+                            }]
+                        },
+                        options: {
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
                                 }
                             }
-                        });
-                    })
-                    .catch(error => console.error('Error loading category data:', error));
+                        }
+                    });
+                } else {
+                    console.log('No category data available');
+                }
             }
         }
     });
