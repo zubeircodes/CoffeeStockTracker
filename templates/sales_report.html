@@ -40,22 +40,34 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for sale in sales %}
-                        <tr>
-                            <td>{{ sale.id }}</td>
-                            <td>{{ sale.sale_date.strftime('%Y-%m-%d') }}</td>
-                            <td>{{ sale.product.name }}</td>
-                            <td>{{ sale.quantity }}</td>
-                            <td>{{ format_currency(sale.unit_price) }}</td>
-                            <td>{{ format_currency(sale.total) }}</td>
-                        </tr>
-                        {% endfor %}
+                        {% if sales and sales|length > 0 %}
+                            {% for sale in sales %}
+                            <tr>
+                                <td>{{ sale.id }}</td>
+                                <td>{{ sale.sale_date.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ sale.product.name }}</td>
+                                <td>{{ sale.quantity }}</td>
+                                <td>{{ format_currency(sale.unit_price) }}</td>
+                                <td>{{ format_currency(sale.total) }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">No sales data available for the selected period.</td>
+                            </tr>
+                        {% endif %}
                     </tbody>
                     <tfoot>
+                        {% if sales and sales|length > 0 %}
                         <tr>
                             <th colspan="5" class="text-end">Total:</th>
                             <th>{{ format_currency(sales|sum(attribute='total')) }}</th>
                         </tr>
+                        {% else %}
+                        <tr>
+                            <th colspan="6" class="text-center">No data to calculate totals</th>
+                        </tr>
+                        {% endif %}
                     </tfoot>
                 </table>
             </div>
