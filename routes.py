@@ -57,6 +57,10 @@ def dashboard():
     revenue_values = []
     top_selling_products = []
     
+    # Sample weekly transactions data (will be replaced with actual data later)
+    weekly_days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    weekly_transactions = [12, 15, 10, 18, 22, 30, 25]
+    
     if sales_count > 0:
         # Get total revenue
         total_revenue = db.session.query(func.sum(Sale.total)).scalar() or 0
@@ -123,7 +127,10 @@ def dashboard():
                           revenue_months=revenue_months,
                           revenue_values=revenue_values,
                           top_selling_products=top_selling_products,
-                          has_sales_data=sales_count > 0)
+                          has_sales_data=sales_count > 0,
+                          # Weekly transactions data
+                          weekly_days=weekly_days,
+                          weekly_transactions=weekly_transactions)
 
 @main.route('/alerts')
 @login_required

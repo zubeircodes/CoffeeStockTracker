@@ -227,8 +227,36 @@
         </div>
     </div>
     
-    <!-- Top Selling Products -->
+    <!-- Weekly Transactions -->
     <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-bottom">
+                <h5 class="mb-0">Weekly Transactions</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="weeklyTransactionsChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row g-4 mt-4">
+    <!-- Inventory by Category -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-bottom">
+                <h5 class="mb-0">Inventory by Category</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="categoryChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Selling Products -->
+    {% if has_sales_data %}
+    <div class="col-lg-4">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-transparent border-bottom">
                 <h5 class="mb-0">Top Selling Products</h5>
@@ -240,7 +268,7 @@
                         <thead>
                             <tr>
                                 <th>Product</th>
-                                <th>Quantity Sold</th>
+                                <th>Quantity</th>
                                 <th>Revenue</th>
                             </tr>
                         </thead>
@@ -263,24 +291,10 @@
             </div>
         </div>
     </div>
-</div>
-{% endif %}
-
-<div class="row g-4 mt-4">
-    <!-- Inventory by Category -->
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-transparent border-bottom">
-                <h5 class="mb-0">Inventory by Category</h5>
-            </div>
-            <div class="card-body">
-                <canvas id="categoryChart" height="250"></canvas>
-            </div>
-        </div>
-    </div>
+    {% endif %}
     
     <!-- Quick Actions -->
-    <div class="col-lg-6">
+    <div class="col-lg-{% if has_sales_data %}4{% else %}8{% endif %}">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-transparent border-bottom">
                 <h5 class="mb-0">Quick Actions</h5>
@@ -416,6 +430,83 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }
+    }
+    
+    // Initialize Weekly Transactions Chart
+    const weeklyTransactionsEl = document.getElementById('weeklyTransactionsChart');
+    if (weeklyTransactionsEl) {
+        const days = {{ weekly_days|tojson }};
+        const transactions = {{ weekly_transactions|tojson }};
+        
+        const weeklyCtx = weeklyTransactionsEl.getContext('2d');
+        const weeklyChart = new Chart(weeklyCtx, {
+            type: 'bar',
+            data: {
+                labels: days,
+                datasets: [{
+                    label: 'Daily Transactions',
+                    backgroundColor: [
+                        'rgba(78, 115, 223, 0.7)',
+                        'rgba(28, 200, 138, 0.7)',
+                        'rgba(54, 185, 204, 0.7)',
+                        'rgba(246, 194, 62, 0.7)',
+                        'rgba(231, 74, 59, 0.7)',
+                        'rgba(133, 135, 150, 0.7)',
+                        'rgba(90, 92, 105, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(78, 115, 223, 1)',
+                        'rgba(28, 200, 138, 1)',
+                        'rgba(54, 185, 204, 1)',
+                        'rgba(246, 194, 62, 1)',
+                        'rgba(231, 74, 59, 1)',
+                        'rgba(133, 135, 150, 1)',
+                        'rgba(90, 92, 105, 1)'
+                    ],
+                    borderWidth: 1,
+                    data: transactions
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += context.parsed.y + ' transactions';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 5,
+                            precision: 0
+                        },
+                        title: {
+                            display: true,
+                            text: 'Number of Transactions'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Day of Week'
+                        }
+                    }
+                }
+            }
+        });
     }
 });
 </script>
