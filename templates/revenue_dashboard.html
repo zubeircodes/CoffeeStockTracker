@@ -135,68 +135,86 @@
 {% endblock %}
 
 {% block scripts %}
-{{ super() }}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script>
+    console.log('Revenue dashboard script loading...');
+    
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM content loaded');
+        
         // Get data
         const months = {{ months|tojson }};
         const revenueData = {{ revenue_data|tojson }};
+        const categoryLabels = {{ category_labels|tojson }};
+        const categoryData = {{ category_data|tojson }};
+        
+        console.log('Months data:', months);
+        console.log('Revenue data:', revenueData);
+        console.log('Category labels:', categoryLabels);
+        console.log('Category data:', categoryData);
         
         // Only initialize charts if we have data
         if (months.length > 0) {
+            console.log('We have chart data, initializing...');
+            
             // Monthly Revenue Chart
             const revenueCtx = document.getElementById('revenueChart');
+            console.log('Revenue chart element:', revenueCtx);
+            
             if (revenueCtx) {
-                new Chart(revenueCtx.getContext('2d'), {
-                    type: 'line',
-                    data: {
-                        labels: months,
-                        datasets: [{
-                            label: 'Monthly Revenue',
-                            lineTension: 0.3,
-                            backgroundColor: "rgba(78, 115, 223, 0.05)",
-                            borderColor: "rgba(78, 115, 223, 1)",
-                            pointRadius: 3,
-                            pointBackgroundColor: "rgba(78, 115, 223, 1)",
-                            pointBorderColor: "rgba(78, 115, 223, 1)",
-                            pointHoverRadius: 3,
-                            pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
-                            pointHoverBorderColor: "rgba(78, 115, 223, 1)",
-                            pointHitRadius: 10,
-                            pointBorderWidth: 2,
-                            data: revenueData
-                        }]
-                    },
-                    options: {
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
+                try {
+                    console.log('Creating revenue chart...');
+                    const revenueChart = new Chart(revenueCtx, {
+                        type: 'line',
+                        data: {
+                            labels: months,
+                            datasets: [{
+                                label: 'Monthly Revenue',
+                                backgroundColor: "rgba(78, 115, 223, 0.05)",
+                                borderColor: "rgba(78, 115, 223, 1)",
+                                pointRadius: 3,
+                                pointBackgroundColor: "rgba(78, 115, 223, 1)",
+                                pointBorderColor: "rgba(78, 115, 223, 1)",
+                                pointHoverRadius: 3,
+                                pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
+                                pointHoverBorderColor: "rgba(78, 115, 223, 1)",
+                                pointHitRadius: 10,
+                                pointBorderWidth: 2,
+                                data: revenueData
+                            }]
                         },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    callback: function(value) {
-                                        return '$' + value.toLocaleString();
+                        options: {
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: function(value) {
+                                            return '$' + value.toLocaleString();
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                });
+                    });
+                    console.log('Revenue chart created successfully');
+                } catch (error) {
+                    console.error('Error creating revenue chart:', error);
+                }
             }
             
-            // Load category data from server-rendered data
+            // Category Chart
             const categoryCtx = document.getElementById('categoryChart');
-            if (categoryCtx) {
-                const categoryLabels = {{ category_labels|tojson }};
-                const categoryData = {{ category_data|tojson }};
-                
-                if (categoryLabels.length > 0) {
-                    new Chart(categoryCtx.getContext('2d'), {
+            console.log('Category chart element:', categoryCtx);
+            
+            if (categoryCtx && categoryLabels.length > 0) {
+                try {
+                    console.log('Creating category chart...');
+                    const categoryChart = new Chart(categoryCtx, {
                         type: 'doughnut',
                         data: {
                             labels: categoryLabels,
@@ -219,10 +237,15 @@
                             }
                         }
                     });
-                } else {
-                    console.log('No category data available');
+                    console.log('Category chart created successfully');
+                } catch (error) {
+                    console.error('Error creating category chart:', error);
                 }
+            } else {
+                console.log('No category data available or chart element not found');
             }
+        } else {
+            console.log('No chart data available');
         }
     });
 </script>
