@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="h3 mb-4">Edit Shift</h1>
+    
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('staff.edit_shift', id=shift.id) }}{{ '?next=calendar' if request.args.get('next') == 'calendar' }}">
+                {{ form.hidden_tag() }}
+                
+                <div class="mb-3">
+                    {{ form.staff_id.label(class="form-label") }}
+                    {{ form.staff_id(class="form-select") }}
+                    {% for error in form.staff_id.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                
+                <div class="mb-3">
+                    {{ form.title.label(class="form-label") }}
+                    {{ form.title(class="form-control", placeholder="Opening Shift, Closing, etc.") }}
+                    {% for error in form.title.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form.start_time.label(class="form-label") }}
+                            {{ form.start_time(class="form-control", type="datetime-local") }}
+                            {% for error in form.start_time.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form.end_time.label(class="form-label") }}
+                            {{ form.end_time(class="form-control", type="datetime-local") }}
+                            {% for error in form.end_time.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3 form-check">
+                    {{ form.is_recurring(class="form-check-input") }}
+                    {{ form.is_recurring.label(class="form-check-label") }}
+                </div>
+                
+                <div id="recurring-options" class="mb-3 card p-3" style="display: none;">
+                    <h6 class="mb-3">Recurring Days</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for value, label in form.recurring_days.choices %}
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="recurring_day_{{ value }}" name="recurring_days" value="{{ value }}"
+                                {% if shift.recurring_days and value in shift.recurring_days.split(',') %}checked{% endif %}>
+                            <label class="form-check-label" for="recurring_day_{{ value }}">{{ label }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    {{ form.notes.label(class="form-label") }}
+                    {{ form.notes(class="form-control", rows=3) }}
+                    {% for error in form.notes.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                
+                <div class="mt-4">
+                    {% if request.args.get('next') == 'calendar' %}
+                    <a href="{{ url_for('staff.shift_calendar') }}" class="btn btn-outline-secondary">Cancel</a>
+                    {% else %}
+                    <a href="{{ url_for('staff.shifts_list') }}" class="btn btn-outline-secondary">Cancel</a>
+                    {% endif %}
+                    {{ form.submit(class="btn btn-primary") }}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Show/hide recurring options
+        const isRecurringCheckbox = document.getElementById('is_recurring');
+        const recurringOptions = document.getElementById('recurring-options');
+        
+        function toggleRecurringOptions() {
+            if (isRecurringCheckbox.checked) {
+                recurringOptions.style.display = 'block';
+            } else {
+                recurringOptions.style.display = 'none';
+            }
+        }
+        
+        // Initial toggle
+        toggleRecurringOptions();
+        
+        // Toggle when checkbox changes
+        isRecurringCheckbox.addEventListener('change', toggleRecurringOptions);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Staff Dashboard</h1>
+        <div>
+            <a href="{{ url_for('staff.staff_list') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-users"></i> Staff List
+            </a>
+            <a href="{{ url_for('staff.shifts_list') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-calendar-week"></i> All Shifts
+            </a>
+            <a href="{{ url_for('staff.create_shift') }}?next=calendar" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Shift
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- On-duty staff panel -->
+        <div class="col-md-3">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Currently On Duty</h5>
+                    <span class="badge bg-success" id="active-count">0</span>
+                </div>
+                <div class="card-body">
+                    <div id="active-staff-list" class="list-group list-group-flush">
+                        <div class="text-center py-3" id="no-active-staff">
+                            <p class="text-muted">No staff currently on duty</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <small class="text-muted">Last updated: <span id="last-updated">Just now</span></small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar panel -->
+        <div class="col-md-9">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div id="staff-calendar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Shift Details Modal -->
+<div class="modal fade" id="shiftDetailsModal" tabindex="-1" aria-labelledby="shiftDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="shiftDetailsModalLabel">Shift Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-borderless">
+                    <tbody>
+                        <tr>
+                            <th style="width: 130px;">Staff:</th>
+                            <td id="modal-staff-name"></td>
+                        </tr>
+                        <tr>
+                            <th>Position:</th>
+                            <td id="modal-position"></td>
+                        </tr>
+                        <tr>
+                            <th>Shift Time:</th>
+                            <td id="modal-shift-time"></td>
+                        </tr>
+                        <tr>
+                            <th>Notes:</th>
+                            <td id="modal-notes"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <a href="#" class="btn btn-outline-primary" id="modal-edit-btn">Edit Shift</a>
+                <form id="delete-shift-form" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize calendar
+        const calendarEl = document.getElementById('staff-calendar');
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            events: "{{ url_for('staff.get_shifts') }}",
+            eventTimeFormat: {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            },
+            height: 'auto',
+            eventClick: function(info) {
+                showShiftDetails(info.event);
+            }
+        });
+        calendar.render();
+        
+        // Load active staff
+        loadActiveStaff();
+        // Refresh active staff every 5 minutes
+        setInterval(loadActiveStaff, 300000);
+        
+        // Show shift details in modal
+        function showShiftDetails(event) {
+            const shiftId = event.id;
+            const staffName = event.extendedProps.staff_name;
+            const position = event.extendedProps.position;
+            const notes = event.extendedProps.notes || 'No notes';
+            const startTime = new Date(event.start);
+            const endTime = new Date(event.end);
+            
+            // Format date and time
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const timeOptions = { hour: '2-digit', minute: '2-digit', hour12: true };
+            
+            const dateStr = startTime.toLocaleDateString('en-US', dateOptions);
+            const startTimeStr = startTime.toLocaleTimeString('en-US', timeOptions);
+            const endTimeStr = endTime.toLocaleTimeString('en-US', timeOptions);
+            
+            // Update modal content
+            document.getElementById('modal-staff-name').textContent = staffName;
+            document.getElementById('modal-position').textContent = position;
+            document.getElementById('modal-shift-time').textContent = `${dateStr}, ${startTimeStr} - ${endTimeStr}`;
+            document.getElementById('modal-notes').textContent = notes;
+            
+            // Update edit button link
+            document.getElementById('modal-edit-btn').href = "{{ url_for('staff.edit_shift', id=0) }}".replace('0', shiftId) + "?next=calendar";
+            
+            // Update delete form action
+            const deleteForm = document.getElementById('delete-shift-form');
+            deleteForm.action = "{{ url_for('staff.delete_shift', id=0) }}".replace('0', shiftId) + "?next=calendar";
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('shiftDetailsModal'));
+            modal.show();
+        }
+        
+        // Load active staff
+        function loadActiveStaff() {
+            fetch("{{ url_for('staff.get_active_shifts') }}")
+                .then(response => response.json())
+                .then(data => {
+                    updateActiveStaffList(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching active shifts:', error);
+                });
+        }
+        
+        // Update active staff list
+        function updateActiveStaffList(shifts) {
+            const container = document.getElementById('active-staff-list');
+            const noActiveStaff = document.getElementById('no-active-staff');
+            const activeCount = document.getElementById('active-count');
+            const lastUpdated = document.getElementById('last-updated');
+            
+            // Clear current list
+            container.innerHTML = '';
+            
+            // Update count
+            activeCount.textContent = shifts.length;
+            
+            // Show/hide no active staff message
+            if (shifts.length === 0) {
+                container.appendChild(noActiveStaff);
+            } else {
+                // Create list items for each active staff
+                shifts.forEach(shift => {
+                    const listItem = document.createElement('div');
+                    listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    listItem.style.borderLeft = `4px solid ${shift.color}`;
+                    
+                    const staffInfo = document.createElement('div');
+                    
+                    const staffName = document.createElement('h6');
+                    staffName.className = 'mb-0';
+                    staffName.textContent = shift.staff_name;
+                    
+                    const position = document.createElement('small');
+                    position.className = 'text-muted';
+                    position.textContent = shift.position;
+                    
+                    staffInfo.appendChild(staffName);
+                    staffInfo.appendChild(position);
+                    
+                    const timeInfo = document.createElement('div');
+                    timeInfo.className = 'text-end';
+                    
+                    const time = document.createElement('small');
+                    time.className = 'text-muted';
+                    time.textContent = `${shift.start_time} - ${shift.end_time}`;
+                    
+                    const remaining = document.createElement('div');
+                    remaining.className = 'badge bg-light text-dark';
+                    
+                    const remainingHours = Math.floor(shift.remaining_minutes / 60);
+                    const remainingMinutes = shift.remaining_minutes % 60;
+                    
+                    let remainingText = '';
+                    if (remainingHours > 0) {
+                        remainingText += `${remainingHours}h `;
+                    }
+                    remainingText += `${remainingMinutes}m left`;
+                    
+                    remaining.textContent = remainingText;
+                    
+                    timeInfo.appendChild(time);
+                    timeInfo.appendChild(remaining);
+                    
+                    listItem.appendChild(staffInfo);
+                    listItem.appendChild(timeInfo);
+                    
+                    container.appendChild(listItem);
+                });
+            }
+            
+            // Update last updated time
+            const now = new Date();
+            lastUpdated.textContent = now.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: true 
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Staff List</h1>
+        <div>
+            <a href="{{ url_for('staff.staff_dashboard') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-calendar-alt"></i> Calendar
+            </a>
+            <a href="{{ url_for('staff.create_staff') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Staff Member
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            {% if staff_members %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Position</th>
+                            <th>Phone</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for staff in staff_members %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div style="width: 12px; height: 12px; border-radius: 50%; background-color: {{ staff.color }}; margin-right: 10px;"></div>
+                                    <span>{{ staff.full_name }}</span>
+                                </div>
+                            </td>
+                            <td>{{ staff.position }}</td>
+                            <td>{{ staff.phone }}</td>
+                            <td>
+                                {% if staff.is_active %}
+                                <span class="badge bg-success">Active</span>
+                                {% if staff.active_shifts > 0 %}
+                                <span class="badge bg-primary">On Duty</span>
+                                {% endif %}
+                                {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('staff.edit_staff', id=staff.id) }}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#deleteModal{{ staff.id }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                                
+                                <!-- Delete Modal -->
+                                <div class="modal fade" id="deleteModal{{ staff.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Confirm Delete</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Are you sure you want to delete <strong>{{ staff.full_name }}</strong>?</p>
+                                                <p class="text-danger"><strong>Warning:</strong> This action cannot be undone.</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <form action="{{ url_for('staff.delete_staff', id=staff.id) }}" method="post">
+                                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <h5 class="text-muted">No staff members added yet</h5>
+                <p>Add your first staff member to get started</p>
+                <a href="{{ url_for('staff.create_staff') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Staff Member
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
