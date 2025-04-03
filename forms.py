@@ -1,5 +1,4 @@
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileField, FileAllowed, FileRequired
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField
 from wtforms import SelectField, FloatField, HiddenField, DateField, EmailField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional, ValidationError
@@ -76,25 +75,3 @@ class ReportForm(FlaskForm):
     start_date = DateField('Start Date', format='%Y-%m-%d', validators=[Optional()])
     end_date = DateField('End Date', format='%Y-%m-%d', validators=[Optional()])
     submit = SubmitField('Generate Report')
-
-class UploadSalesForm(FlaskForm):
-    sales_file = FileField('Sales CSV File',
-                        validators=[
-                            FileRequired(),
-                            FileAllowed(['csv'], 'CSV files only!')
-                        ])
-    submit = SubmitField('Upload Sales Data')
-
-class RevenueReportForm(FlaskForm):
-    start_date = DateField('Start Date', format='%Y-%m-%d', validators=[Optional()])
-    end_date = DateField('End Date', format='%Y-%m-%d', validators=[Optional()])
-    report_period = SelectField('Period', 
-                             choices=[
-                                 ('7', 'Last 7 Days'),
-                                 ('30', 'Last 30 Days'),
-                                 ('90', 'Last 90 Days'),
-                                 ('365', 'Last Year'),
-                                 ('custom', 'Custom Range')
-                             ],
-                             default='30')
-    submit = SubmitField('Apply Filter')

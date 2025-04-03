@@ -37,7 +37,7 @@ login_manager.login_message_category = 'info'
 # Create all database tables
 with app.app_context():
     # Import models here to avoid circular imports
-    from models import User, Product, Vendor, InventoryTransaction, Sale, SaleItem, PaymentType
+    from models import User, Product, Vendor, InventoryTransaction
     db.create_all()
 
 # Register blueprints
@@ -50,9 +50,6 @@ with app.app_context():
     
     from reports import reports as reports_blueprint
     app.register_blueprint(reports_blueprint)
-    
-    from revenue import revenue as revenue_blueprint
-    app.register_blueprint(revenue_blueprint)
     
     from routes import main as main_blueprint
     app.register_blueprint(main_blueprint)
