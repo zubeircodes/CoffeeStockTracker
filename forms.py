@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField
-from wtforms import SelectField, SelectMultipleField, FloatField, HiddenField, DateField, EmailField, DateTimeField
+from wtforms import SelectField, FloatField, HiddenField, DateField, EmailField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional, ValidationError
 from models import User, Product, Vendor
 
@@ -84,43 +84,3 @@ class SalesUploadForm(FlaskForm):
         FileAllowed(['csv'], 'CSV files only!')
     ])
     submit = SubmitField('Upload Sales Data')
-
-class StaffForm(FlaskForm):
-    first_name = StringField('First Name', validators=[DataRequired(), Length(max=50)])
-    last_name = StringField('Last Name', validators=[DataRequired(), Length(max=50)])
-    position = SelectField('Position', choices=[
-        ('barista', 'Barista'),
-        ('shift_lead', 'Shift Lead'),
-        ('manager', 'Manager'),
-        ('assistant_manager', 'Assistant Manager'),
-        ('owner', 'Owner')
-    ], validators=[DataRequired()])
-    role = SelectField('Role', choices=[
-        ('staff', 'Staff'),
-        ('management', 'Management'),
-        ('admin', 'Admin')
-    ], validators=[DataRequired()])
-    phone = StringField('Phone Number', validators=[Length(max=20)])
-    color = StringField('Color', validators=[Length(max=7)], default='#3788d8')
-    hourly_rate = FloatField('Hourly Rate ($)', validators=[Optional()])
-    hire_date = DateField('Hire Date', format='%Y-%m-%d', validators=[Optional()])
-    is_active = BooleanField('Active', default=True)
-    submit = SubmitField('Save Staff')
-
-class ShiftForm(FlaskForm):
-    staff_id = SelectField('Staff Member', coerce=int, validators=[DataRequired()])
-    title = StringField('Shift Title', validators=[Length(max=100)]) 
-    start_time = DateTimeField('Start Time', format='%Y-%m-%d %H:%M', validators=[DataRequired()])
-    end_time = DateTimeField('End Time', format='%Y-%m-%d %H:%M', validators=[DataRequired()])
-    is_recurring = BooleanField('Recurring Shift')
-    recurring_days = SelectMultipleField('Recurring Days', choices=[
-        ('0', 'Sunday'),
-        ('1', 'Monday'),
-        ('2', 'Tuesday'),
-        ('3', 'Wednesday'),
-        ('4', 'Thursday'),
-        ('5', 'Friday'),
-        ('6', 'Saturday')
-    ], validators=[Optional()])  # Making this field optional
-    notes = TextAreaField('Notes')
-    submit = SubmitField('Save Shift')

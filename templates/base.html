@@ -50,11 +50,6 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if '/staff' in request.path %}active{% endif %}" href="{{ url_for('staff.staff_dashboard') }}">
-                                <i class="fas fa-users me-1"></i> Staff
-                            </a>
-                        </li>
-                        <li class="nav-item">
                             <a class="nav-link {% if '/alerts' in request.path %}active{% endif %}" href="{{ url_for('main.alerts') }}">
                                 <i class="fas fa-bell me-1"></i> Alerts
                                 {% set low_stock_count = get_low_stock_products()|length %}

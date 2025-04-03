@@ -1,4 +1,4 @@
-from datetime import datetime, time
+from datetime import datetime
 from app import db, login_manager
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -13,9 +13,6 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relationships
-    staff_profile = db.relationship('Staff', backref='user_account', uselist=False)
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -105,55 +102,3 @@ class Sale(db.Model):
     
     def __repr__(self):
         return f'<Sale {self.id} {self.product.name if self.product else "Unknown"}>'
-
-class Staff(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    first_name = db.Column(db.String(50), nullable=False)
-    last_name = db.Column(db.String(50), nullable=False)
-    position = db.Column(db.String(50), nullable=False)  # Barista, Manager, etc.
-    role = db.Column(db.String(20), nullable=False)  # Role for color-coding
-    phone = db.Column(db.String(20))
-    color = db.Column(db.String(7), default='#3788d8')  # Default color for shifts
-    hourly_rate = db.Column(db.Float, default=0.0)
-    hire_date = db.Column(db.Date)
-    is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # Relationships
-    shifts = db.relationship('Shift', backref='staff', lazy=True)
-    
-    @property
-    def full_name(self):
-        return f"{self.first_name} {self.last_name}"
-    
-    def __repr__(self):
-        return f'<Staff {self.full_name}>'
-
-class Shift(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    staff_id = db.Column(db.Integer, db.ForeignKey('staff.id'), nullable=False)
-    title = db.Column(db.String(100))  # Optional title for the shift
-    start_time = db.Column(db.DateTime, nullable=False)
-    end_time = db.Column(db.DateTime, nullable=False)
-    is_recurring = db.Column(db.Boolean, default=False)
-    recurring_days = db.Column(db.String(20))  # Comma-separated days of week
-    notes = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    @property
-    def duration_hours(self):
-        """Calculate shift duration in hours"""
-        delta = self.end_time - self.start_time
-        return delta.total_seconds() / 3600
-    
-    @property
-    def is_active(self):
-        """Check if the shift is currently active"""
-        now = datetime.utcnow()
-        return self.start_time <= now <= self.end_time
-    
-    def __repr__(self):
-        return f'<Shift {self.id} {self.staff.full_name if self.staff else "Unknown"}>'
