@@ -1,9 +1,9 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField
-from wtforms import SelectField, FloatField, HiddenField, DateField, EmailField
+from wtforms import SelectField, FloatField, HiddenField, DateField, EmailField, DateTimeField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional, ValidationError
-from models import User, Product, Vendor
+from models import User, Product, Vendor, Staff
 
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -84,3 +84,40 @@ class SalesUploadForm(FlaskForm):
         FileAllowed(['csv'], 'CSV files only!')
     ])
     submit = SubmitField('Upload Sales Data')
+
+class StaffForm(FlaskForm):
+    name = StringField('Full Name', validators=[DataRequired(), Length(max=100)])
+    email = EmailField('Email', validators=[DataRequired(), Email(), Length(max=120)])
+    phone = StringField('Phone Number', validators=[Length(max=20)])
+    position = StringField('Position/Role', validators=[DataRequired(), Length(max=50)])
+    status = SelectField('Status', choices=[
+        ('active', 'Active'), 
+        ('inactive', 'Inactive')
+    ], validators=[DataRequired()])
+    google_calendar_id = StringField('Google Calendar ID', validators=[Optional(), Length(max=255)])
+    notes = TextAreaField('Notes')
+    submit = SubmitField('Save Staff Member')
+    
+    def validate_email(self, email):
+        staff = Staff.query.filter_by(email=email.data).first()
+        if staff and (not hasattr(self, 'id') or staff.id != self.id.data):
+            raise ValidationError('This email address is already registered to another staff member.')
+
+class ShiftForm(FlaskForm):
+    staff_id = SelectField('Staff Member', coerce=int, validators=[DataRequired()])
+    start_time = DateTimeField('Start Time', format='%Y-%m-%d %H:%M', validators=[DataRequired()])
+    end_time = DateTimeField('End Time', format='%Y-%m-%d %H:%M', validators=[DataRequired()])
+    location = StringField('Location', validators=[DataRequired(), Length(max=100)])
+    shift_type = SelectField('Shift Type', choices=[
+        ('opening', 'Opening'),
+        ('mid-day', 'Mid-Day'),
+        ('closing', 'Closing'),
+        ('special', 'Special Event')
+    ], validators=[DataRequired()])
+    status = SelectField('Status', choices=[
+        ('scheduled', 'Scheduled'),
+        ('completed', 'Completed'),
+        ('canceled', 'Canceled')
+    ], validators=[DataRequired()])
+    notes = TextAreaField('Notes')
+    submit = SubmitField('Save Shift')
