@@ -86,8 +86,8 @@ class SalesUploadForm(FlaskForm):
     submit = SubmitField('Upload Sales Data')
 
 class StaffForm(FlaskForm):
-    name = StringField('Full Name', validators=[DataRequired(), Length(max=100)])
-    email = EmailField('Email', validators=[Optional(), Email(), Length(max=120)])
+    first_name = StringField('First Name', validators=[DataRequired(), Length(max=100)])
+    last_name = StringField('Last Name', validators=[DataRequired(), Length(max=100)])
     phone = StringField('Phone', validators=[Length(max=20)])
     position = SelectField('Position', 
                           choices=[('barista', 'Barista'), 
@@ -96,20 +96,17 @@ class StaffForm(FlaskForm):
                                    ('cook', 'Cook'),
                                    ('server', 'Server')],
                           validators=[DataRequired()])
+    role = SelectField('Role', 
+                      choices=[('employee', 'Employee'), 
+                               ('supervisor', 'Supervisor'), 
+                               ('manager', 'Manager')],
+                      validators=[DataRequired()])
     hourly_rate = FloatField('Hourly Rate ($)', validators=[DataRequired(), NumberRange(min=0)])
     hire_date = DateField('Hire Date', format='%Y-%m-%d', validators=[DataRequired()])
-    status = SelectField('Status', 
-                        choices=[('active', 'Active'), 
-                                 ('inactive', 'Inactive')],
-                        validators=[DataRequired()])
+    is_active = BooleanField('Active')
+    color = StringField('Calendar Color', validators=[Length(max=50)])
     submit = SubmitField('Save Staff')
     
-    def validate_email(self, email):
-        if email.data:
-            staff = Staff.query.filter_by(email=email.data).first()
-            if staff and (not self.id.data or int(self.id.data) != staff.id):
-                raise ValidationError('This email is already registered to another staff member.')
-                
     def __init__(self, *args, **kwargs):
         super(StaffForm, self).__init__(*args, **kwargs)
         self.id = HiddenField('id')

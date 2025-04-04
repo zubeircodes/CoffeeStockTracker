@@ -14,7 +14,7 @@ def staff_list():
     """
     Display list of staff members
     """
-    staff = Staff.query.order_by(Staff.name).all()
+    staff = Staff.query.order_by(Staff.first_name, Staff.last_name).all()
     return render_template('staff/staff_list.html', staff=staff, title='Staff Management')
 
 @staff_bp.route('/staff/create', methods=['GET', 'POST'])
@@ -26,14 +26,27 @@ def create_staff():
     form = StaffForm()
     
     if form.validate_on_submit():
+        # Generate default color based on position
+        position_colors = {
+            'barista': '#28a745',  # green
+            'manager': '#007bff',  # blue
+            'cashier': '#fd7e14',  # orange
+            'cook': '#dc3545',     # red
+            'server': '#6f42c1'    # purple
+        }
+        default_color = position_colors.get(form.position.data, '#6c757d')
+        
         staff = Staff(
-            name=form.name.data,
-            email=form.email.data,
+            first_name=form.first_name.data,
+            last_name=form.last_name.data,
             phone=form.phone.data,
             position=form.position.data,
+            role=form.role.data,
             hourly_rate=form.hourly_rate.data,
             hire_date=form.hire_date.data,
-            status=form.status.data
+            is_active=form.is_active.data,
+            color=form.color.data or default_color,
+            user_id=current_user.id
         )
         db.session.add(staff)
         db.session.commit()
@@ -52,23 +65,27 @@ def edit_staff(id):
     form = StaffForm()
     
     if request.method == 'GET':
-        form.name.data = staff.name
-        form.email.data = staff.email
+        form.first_name.data = staff.first_name
+        form.last_name.data = staff.last_name
         form.phone.data = staff.phone
-        form.position.data = staff.position
+        form.position.data = staff.position if staff.position else 'barista'
+        form.role.data = staff.role if staff.role else 'employee'
         form.hourly_rate.data = staff.hourly_rate
         form.hire_date.data = staff.hire_date
-        form.status.data = staff.status
+        form.is_active.data = staff.is_active
+        form.color.data = staff.color
         form.id.data = staff.id
     
     if form.validate_on_submit():
-        staff.name = form.name.data
-        staff.email = form.email.data
+        staff.first_name = form.first_name.data
+        staff.last_name = form.last_name.data
         staff.phone = form.phone.data
         staff.position = form.position.data
+        staff.role = form.role.data
         staff.hourly_rate = form.hourly_rate.data
         staff.hire_date = form.hire_date.data
-        staff.status = form.status.data
+        staff.is_active = form.is_active.data
+        staff.color = form.color.data
         staff.updated_at = datetime.utcnow()
         
         db.session.commit()
@@ -114,7 +131,7 @@ def create_shift():
     form = ShiftForm()
     
     # Populate staff dropdown
-    form.staff_id.choices = [(s.id, s.name) for s in Staff.query.filter_by(status='active').order_by(Staff.name)]
+    form.staff_id.choices = [(s.id, s.name) for s in Staff.query.filter_by(is_active=True).order_by(Staff.first_name, Staff.last_name)]
     
     if form.validate_on_submit():
         shift = Shift(
@@ -142,7 +159,7 @@ def edit_shift(id):
     form = ShiftForm()
     
     # Populate staff dropdown
-    form.staff_id.choices = [(s.id, s.name) for s in Staff.query.filter_by(status='active').order_by(Staff.name)]
+    form.staff_id.choices = [(s.id, s.name) for s in Staff.query.filter_by(is_active=True).order_by(Staff.first_name, Staff.last_name)]
     
     if request.method == 'GET':
         form.staff_id.data = shift.staff_id
@@ -183,7 +200,7 @@ def schedule():
     """
     Display staff schedule calendar
     """
-    staff_members = Staff.query.filter_by(status='active').order_by(Staff.name).all()
+    staff_members = Staff.query.filter_by(is_active=True).order_by(Staff.first_name, Staff.last_name).all()
     return render_template('staff/schedule.html', staff=staff_members, title='Staff Schedule')
 
 @staff_bp.route('/schedule/data', methods=['GET'])
@@ -215,11 +232,12 @@ def schedule_data():
     for shift in shifts:
         # Get staff position for color coding
         position = shift.staff.position if shift.staff else 'barista'
-        color = staff_colors.get(position, '#6c757d')  # default gray
+        # Use staff's custom color if available, otherwise use position color
+        color = shift.staff.color if shift.staff and shift.staff.color else staff_colors.get(position, '#6c757d')
         
         events.append({
             'id': shift.id,
-            'title': f"{shift.staff.name} ({shift.staff.position.capitalize()})",
+            'title': f"{shift.staff.name} ({shift.staff.position.capitalize() if shift.staff and shift.staff.position else 'Staff'})",
             'start': shift.start_time.isoformat(),
             'end': shift.end_time.isoformat(),
             'color': color,

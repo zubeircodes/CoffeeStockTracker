@@ -105,18 +105,38 @@ class Sale(db.Model):
 
 class Staff(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(120), unique=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    first_name = db.Column(db.String(100))
+    last_name = db.Column(db.String(100))
     phone = db.Column(db.String(20))
-    position = db.Column(db.String(50), nullable=False)
+    position = db.Column(db.String(50))
+    role = db.Column(db.String(50))
     hourly_rate = db.Column(db.Float, default=0.0)
-    hire_date = db.Column(db.DateTime, default=datetime.utcnow)
-    status = db.Column(db.String(20), default='active')  # 'active' or 'inactive'
+    hire_date = db.Column(db.Date, default=datetime.utcnow)
+    is_active = db.Column(db.Boolean, default=True)
+    color = db.Column(db.String(50))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
     shifts = db.relationship('Shift', backref='staff', lazy=True, cascade="all, delete-orphan")
+    
+    @property
+    def name(self):
+        """Return the full name of the staff member"""
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        elif self.first_name:
+            return self.first_name
+        elif self.last_name:
+            return self.last_name
+        else:
+            return "Unknown"
+    
+    @property
+    def status(self):
+        """Return 'active' or 'inactive' based on is_active"""
+        return 'active' if self.is_active else 'inactive'
     
     def __repr__(self):
         return f'<Staff {self.name}>'
