@@ -1,9 +1,9 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
-from models import Product, Category, Vendor, InventoryTransaction, Sale
+from models import Product, Category, Vendor, InventoryTransaction, Sale, Staff, Shift
 from app import db
-from sqlalchemy import func, extract
-from datetime import datetime
+from sqlalchemy import func, extract, and_, or_
+from datetime import datetime, date, time
 from dateutil.relativedelta import relativedelta
 
 main = Blueprint('main', __name__)
@@ -27,11 +27,8 @@ def dashboard():
     # Get total inventory value
     total_value = db.session.query(db.func.sum(Product.quantity * Product.price)).scalar() or 0
     
-    # Get total product count
-    product_count = Product.query.count()
-    
-    # Get total vendor count
-    vendor_count = Vendor.query.count()
+    # Get staff on duty today
+    staff_on_duty_count, staff_on_duty = get_staff_on_duty_today()
     
     # Get category distribution
     categories = Category.query.all()
@@ -116,9 +113,10 @@ def dashboard():
                           low_stock_items=low_stock_items,
                           recent_transactions=recent_transactions,
                           total_value=total_value,
-                          product_count=product_count,
-                          vendor_count=vendor_count,
                           category_data=category_data,
+                          # Staff on duty data
+                          staff_on_duty_count=staff_on_duty_count,
+                          staff_on_duty=staff_on_duty,
                           # Revenue data
                           total_revenue=total_revenue,
                           monthly_revenue=monthly_revenue,
@@ -131,6 +129,53 @@ def dashboard():
                           # Weekly transactions data
                           weekly_days=weekly_days,
                           weekly_transactions=weekly_transactions)
+
+def get_staff_on_duty_today():
+    """
+    Get staff members who are scheduled to work today
+    Returns count of staff and list of staff members
+    """
+    today = datetime.now().date()
+    today_start = datetime.combine(today, time.min)
+    today_end = datetime.combine(today, time.max)
+    
+    # Get day of week for checking recurring shifts
+    day_of_week = today.strftime("%a")
+    
+    # Query non-recurring shifts scheduled for today
+    non_recurring_shifts = Shift.query.filter(
+        Shift.is_recurring == False,
+        Shift.start_time >= today_start,
+        Shift.start_time <= today_end
+    ).all()
+    
+    # Query recurring shifts that might be active today
+    recurring_shifts = Shift.query.filter(
+        Shift.is_recurring == True,
+        Shift.recurring_days.contains(day_of_week)
+    ).all()
+    
+    # Combine staff from both types of shifts
+    staff_ids = set()
+    shifts_today = []
+    
+    # Add staff from non-recurring shifts
+    for shift in non_recurring_shifts:
+        staff_ids.add(shift.staff_id)
+        shifts_today.append(shift)
+    
+    # Add staff from recurring shifts
+    for shift in recurring_shifts:
+        # Check if the recurring shift has an end date and if today is before that end date
+        if shift.end_date and today > shift.end_date:
+            continue
+        staff_ids.add(shift.staff_id)
+        shifts_today.append(shift)
+    
+    # Get actual staff objects
+    staff_on_duty = Staff.query.filter(Staff.id.in_(staff_ids)).all() if staff_ids else []
+    
+    return len(staff_on_duty), staff_on_duty
 
 @main.route('/alerts')
 @login_required
