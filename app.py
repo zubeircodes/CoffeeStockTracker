@@ -37,7 +37,7 @@ login_manager.login_message_category = 'info'
 # Create all database tables
 with app.app_context():
     # Import models here to avoid circular imports
-    from models import User, Product, Vendor, InventoryTransaction, Sale
+    from models import User, Product, Vendor, InventoryTransaction, Sale, Staff, Shift
     db.create_all()
 
 # Register blueprints
@@ -56,6 +56,9 @@ with app.app_context():
     
     from routes import main as main_blueprint
     app.register_blueprint(main_blueprint)
+    
+    from staff import staff_bp as staff_blueprint
+    app.register_blueprint(staff_blueprint)
     
     # Add utility functions to template context
     from utils import (get_low_stock_products, get_products_by_category, 

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">Shift Management</h1>
+    <div>
+      <a href="{{ url_for('staff.schedule') }}" class="btn btn-outline-primary me-2">
+        <i class="bi bi-calendar-week me-1"></i> Calendar View
+      </a>
+      <a href="{{ url_for('staff.staff_list') }}" class="btn btn-outline-secondary me-2">
+        <i class="bi bi-people me-1"></i> Staff Directory
+      </a>
+      <a href="{{ url_for('staff.create_shift') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i> Add Shift
+      </a>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary bg-opacity-75 text-white">
+      <h5 class="card-title mb-0">All Shifts</h5>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Staff Member</th>
+              <th>Position</th>
+              <th>Start Time</th>
+              <th>End Time</th>
+              <th>Duration</th>
+              <th>Break</th>
+              <th>Notes</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for shift in shifts %}
+            <tr>
+              <td>{{ shift.staff.name }}</td>
+              <td>{{ shift.staff.position|capitalize }}</td>
+              <td>{{ shift.start_time.strftime('%b %d, %Y %I:%M %p') }}</td>
+              <td>{{ shift.end_time.strftime('%b %d, %Y %I:%M %p') }}</td>
+              <td>{{ shift.duration }} hrs</td>
+              <td>{% if shift.break_duration %}{{ shift.break_duration }} min{% else %}-{% endif %}</td>
+              <td>
+                {% if shift.notes %}
+                <span class="d-inline-block text-truncate" style="max-width: 150px;" 
+                      data-bs-toggle="tooltip" title="{{ shift.notes }}">
+                  {{ shift.notes }}
+                </span>
+                {% else %}
+                -
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <div class="btn-group btn-group-sm">
+                  <a href="{{ url_for('staff.edit_shift', id=shift.id) }}" class="btn btn-outline-primary">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  <button type="button" class="btn btn-outline-danger" 
+                          data-bs-toggle="modal" data-bs-target="#deleteShiftModal{{ shift.id }}">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+                
+                <!-- Delete Confirmation Modal -->
+                <div class="modal fade" id="deleteShiftModal{{ shift.id }}" tabindex="-1" aria-hidden="true">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">Confirm Delete</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body">
+                        Are you sure you want to delete this shift for
+                        <strong>{{ shift.staff.name }}</strong> on 
+                        <strong>{{ shift.start_time.strftime('%b %d, %Y') }}</strong>?
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <form action="{{ url_for('staff.delete_shift', id=shift.id) }}" method="post">
+                          <button type="submit" class="btn btn-danger">Delete</button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="8" class="text-center py-4">
+                <div class="text-muted">
+                  <i class="bi bi-calendar-x fs-2 d-block mb-3"></i>
+                  No shifts found. Add your first shift to get started.
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Initialize tooltips
+  document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block head %}
+<!-- Include FullCalendar CSS and JS -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+<style>
+  .fc-event {
+    cursor: pointer;
+  }
+  .fc-toolbar-title {
+    font-size: 1.25rem !important;
+  }
+  .fc-header-toolbar {
+    margin-bottom: 0.5rem !important;
+  }
+  .fc-view-harness {
+    min-height: 500px;
+  }
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 15px;
+  }
+  .legend-color {
+    width: 15px;
+    height: 15px;
+    border-radius: 3px;
+    margin-right: 5px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">Staff Schedule</h1>
+    <div>
+      <a href="{{ url_for('staff.shift_list') }}" class="btn btn-outline-secondary me-2">
+        <i class="bi bi-list-ul me-1"></i> List View
+      </a>
+      <a href="{{ url_for('staff.staff_list') }}" class="btn btn-outline-secondary me-2">
+        <i class="bi bi-people me-1"></i> Staff Directory
+      </a>
+      <a href="{{ url_for('staff.create_shift') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i> Add Shift
+      </a>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary bg-opacity-75 text-white d-flex justify-content-between align-items-center">
+      <h5 class="card-title mb-0">Staff Calendar</h5>
+      <div>
+        <button id="todayBtn" class="btn btn-sm btn-light me-1">Today</button>
+        <div class="btn-group btn-group-sm" role="group">
+          <button id="weekBtn" class="btn btn-light">Week</button>
+          <button id="monthBtn" class="btn btn-light">Month</button>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="mb-3">
+        <div class="d-flex flex-wrap">
+          <div class="legend-item">
+            <div class="legend-color" style="background-color: #28a745;"></div>
+            <span>Barista</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background-color: #007bff;"></div>
+            <span>Manager</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background-color: #fd7e14;"></div>
+            <span>Cashier</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background-color: #dc3545;"></div>
+            <span>Cook</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background-color: #6f42c1;"></div>
+            <span>Server</span>
+          </div>
+        </div>
+      </div>
+      
+      <div id="calendar"></div>
+    </div>
+  </div>
+  
+  <!-- Filter by Staff Member -->
+  <div class="card shadow-sm">
+    <div class="card-header bg-light">
+      <h5 class="card-title mb-0">Filter by Staff</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        {% for member in staff %}
+        <div class="col-md-3 col-sm-6 mb-2">
+          <div class="form-check">
+            <input class="form-check-input staff-filter" type="checkbox" 
+                   value="{{ member.id }}" id="staff{{ member.id }}" checked>
+            <label class="form-check-label" for="staff{{ member.id }}">
+              {{ member.name }} ({{ member.position|capitalize }})
+            </label>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Shift Details Modal -->
+<div class="modal fade" id="shiftDetailsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="shiftDetailsTitle">Shift Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Staff:</strong> <span id="shiftStaff"></span></p>
+        <p><strong>Position:</strong> <span id="shiftPosition"></span></p>
+        <p><strong>Time:</strong> <span id="shiftTime"></span></p>
+        <p><strong>Duration:</strong> <span id="shiftDuration"></span> hours</p>
+        <p><strong>Break:</strong> <span id="shiftBreak"></span></p>
+        <div id="shiftNotesContainer">
+          <p><strong>Notes:</strong></p>
+          <p id="shiftNotes" class="border-start ps-2"></p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <a href="#" id="editShiftBtn" class="btn btn-primary">Edit Shift</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+    var staffFilters = document.querySelectorAll('.staff-filter');
+    var shiftDetailsModal;
+    
+    // Initialize modal
+    shiftDetailsModal = new bootstrap.Modal(document.getElementById('shiftDetailsModal'));
+    
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'timeGridWeek',
+      headerToolbar: {
+        left: 'prev,next',
+        center: 'title',
+        right: ''
+      },
+      height: 'auto',
+      allDaySlot: false,
+      slotMinTime: '06:00:00',
+      slotMaxTime: '22:00:00',
+      nowIndicator: true,
+      navLinks: true,
+      weekNumbers: false,
+      weekends: true,
+      editable: false,
+      selectable: false,
+      selectMirror: true,
+      dayMaxEvents: true,
+      slotDuration: '00:30:00',
+      eventTimeFormat: {
+        hour: 'numeric',
+        minute: '2-digit',
+        meridiem: 'short'
+      },
+      events: {
+        url: '{{ url_for("staff.schedule_data") }}',
+        failure: function() {
+          alert('There was an error loading shifts!');
+        }
+      },
+      eventClick: function(info) {
+        // Show modal with shift details
+        var event = info.event;
+        var props = event.extendedProps;
+        
+        document.getElementById('shiftDetailsTitle').textContent = 'Shift Details: ' + event.title;
+        document.getElementById('shiftStaff').textContent = props.staffName;
+        document.getElementById('shiftPosition').textContent = props.position.charAt(0).toUpperCase() + props.position.slice(1);
+        
+        // Format the time
+        var startTime = new Date(event.start);
+        var endTime = new Date(event.end);
+        var timeStr = startTime.toLocaleString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        }) + ' to ' + endTime.toLocaleString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+        
+        document.getElementById('shiftTime').textContent = timeStr;
+        document.getElementById('shiftDuration').textContent = props.duration;
+        document.getElementById('shiftBreak').textContent = props.breakDuration ? props.breakDuration + ' minutes' : 'None';
+        
+        var notesContainer = document.getElementById('shiftNotesContainer');
+        var notes = document.getElementById('shiftNotes');
+        
+        if (props.notes) {
+          notes.textContent = props.notes;
+          notesContainer.style.display = 'block';
+        } else {
+          notesContainer.style.display = 'none';
+        }
+        
+        // Set up edit button
+        document.getElementById('editShiftBtn').href = "{{ url_for('staff.edit_shift', id=0) }}".replace('0', event.id);
+        
+        shiftDetailsModal.show();
+      },
+      eventContent: function(arg) {
+        var event = arg.event;
+        var timeText = document.createElement('div');
+        timeText.innerHTML = '<i class="bi bi-clock me-1"></i>' + 
+          event.start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) + 
+          ' - ' + 
+          event.end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        timeText.className = 'fc-event-time';
+        
+        var titleEl = document.createElement('div');
+        titleEl.innerHTML = '<div><strong>' + event.title + '</strong></div>';
+        titleEl.className = 'fc-event-title';
+        
+        return { domNodes: [timeText, titleEl] };
+      }
+    });
+    
+    calendar.render();
+    
+    // Handle view buttons
+    document.getElementById('weekBtn').addEventListener('click', function() {
+      calendar.changeView('timeGridWeek');
+    });
+    
+    document.getElementById('monthBtn').addEventListener('click', function() {
+      calendar.changeView('dayGridMonth');
+    });
+    
+    document.getElementById('todayBtn').addEventListener('click', function() {
+      calendar.today();
+    });
+    
+    // Handle staff filtering
+    staffFilters.forEach(function(checkbox) {
+      checkbox.addEventListener('change', updateCalendarEvents);
+    });
+    
+    function updateCalendarEvents() {
+      var selectedStaffIds = [];
+      staffFilters.forEach(function(checkbox) {
+        if (checkbox.checked) {
+          selectedStaffIds.push(parseInt(checkbox.value));
+        }
+      });
+      
+      // If all or none are selected, show all events
+      if (selectedStaffIds.length === 0 || selectedStaffIds.length === staffFilters.length) {
+        calendar.getEvents().forEach(function(event) {
+          event.setProp('display', 'auto');
+        });
+        return;
+      }
+      
+      // Otherwise, filter events
+      calendar.getEvents().forEach(function(event) {
+        var staffId = event.extendedProps.staffId;
+        if (selectedStaffIds.includes(staffId)) {
+          event.setProp('display', 'auto');
+        } else {
+          event.setProp('display', 'none');
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

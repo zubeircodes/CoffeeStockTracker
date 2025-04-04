@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary bg-opacity-75 text-white">
+          <h5 class="card-title mb-0">
+            {% if shift %}Edit{% else %}Add{% endif %} Shift
+          </h5>
+        </div>
+        <div class="card-body">
+          <form method="post" novalidate>
+            {{ form.hidden_tag() }}
+            
+            <div class="row mb-3">
+              <div class="col-md-12">
+                {{ form.staff_id.label(class="form-label") }}
+                {{ form.staff_id(class="form-select" + (" is-invalid" if form.staff_id.errors else "")) }}
+                {% for error in form.staff_id.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+                {% if not form.staff_id.choices %}
+                <div class="form-text text-warning">
+                  <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                  No active staff members available. Please add staff members first.
+                </div>
+                {% endif %}
+              </div>
+            </div>
+            
+            <div class="row mb-3">
+              <div class="col-md-6">
+                {{ form.start_time.label(class="form-label") }}
+                {{ form.start_time(class="form-control" + (" is-invalid" if form.start_time.errors else ""), type="datetime-local") }}
+                {% for error in form.start_time.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+              </div>
+              <div class="col-md-6">
+                {{ form.end_time.label(class="form-label") }}
+                {{ form.end_time(class="form-control" + (" is-invalid" if form.end_time.errors else ""), type="datetime-local") }}
+                {% for error in form.end_time.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+            
+            <div class="row mb-3">
+              <div class="col-md-6">
+                {{ form.break_duration.label(class="form-label") }}
+                <div class="input-group">
+                  {{ form.break_duration(class="form-control" + (" is-invalid" if form.break_duration.errors else "")) }}
+                  <span class="input-group-text">min</span>
+                  {% for error in form.break_duration.errors %}
+                  <div class="invalid-feedback">{{ error }}</div>
+                  {% endfor %}
+                </div>
+                <div class="form-text">Optional. Leave empty for no break.</div>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              {{ form.notes.label(class="form-label") }}
+              {{ form.notes(class="form-control" + (" is-invalid" if form.notes.errors else ""), rows=3) }}
+              {% for error in form.notes.errors %}
+              <div class="invalid-feedback">{{ error }}</div>
+              {% endfor %}
+            </div>
+            
+            <div class="d-flex justify-content-between mt-4">
+              <a href="{{ url_for('staff.shift_list') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Shifts
+              </a>
+              {{ form.submit(class="btn btn-primary") }}
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

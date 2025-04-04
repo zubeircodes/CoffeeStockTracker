@@ -1,9 +1,9 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField
-from wtforms import SelectField, FloatField, HiddenField, DateField, EmailField
-from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional, ValidationError
-from models import User, Product, Vendor
+from wtforms import SelectField, FloatField, HiddenField, DateField, EmailField, DateTimeField, IntegerField
+from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional, ValidationError, NumberRange
+from models import User, Product, Vendor, Staff
 
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -84,3 +84,45 @@ class SalesUploadForm(FlaskForm):
         FileAllowed(['csv'], 'CSV files only!')
     ])
     submit = SubmitField('Upload Sales Data')
+
+class StaffForm(FlaskForm):
+    name = StringField('Full Name', validators=[DataRequired(), Length(max=100)])
+    email = EmailField('Email', validators=[Optional(), Email(), Length(max=120)])
+    phone = StringField('Phone', validators=[Length(max=20)])
+    position = SelectField('Position', 
+                          choices=[('barista', 'Barista'), 
+                                   ('manager', 'Manager'), 
+                                   ('cashier', 'Cashier'),
+                                   ('cook', 'Cook'),
+                                   ('server', 'Server')],
+                          validators=[DataRequired()])
+    hourly_rate = FloatField('Hourly Rate ($)', validators=[DataRequired(), NumberRange(min=0)])
+    hire_date = DateField('Hire Date', format='%Y-%m-%d', validators=[DataRequired()])
+    status = SelectField('Status', 
+                        choices=[('active', 'Active'), 
+                                 ('inactive', 'Inactive')],
+                        validators=[DataRequired()])
+    submit = SubmitField('Save Staff')
+    
+    def validate_email(self, email):
+        if email.data:
+            staff = Staff.query.filter_by(email=email.data).first()
+            if staff and (not self.id.data or int(self.id.data) != staff.id):
+                raise ValidationError('This email is already registered to another staff member.')
+                
+    def __init__(self, *args, **kwargs):
+        super(StaffForm, self).__init__(*args, **kwargs)
+        self.id = HiddenField('id')
+        
+class ShiftForm(FlaskForm):
+    staff_id = SelectField('Staff Member', coerce=int, validators=[DataRequired()])
+    start_time = DateTimeField('Start Time', format='%Y-%m-%d %H:%M', validators=[DataRequired()])
+    end_time = DateTimeField('End Time', format='%Y-%m-%d %H:%M', validators=[DataRequired()])
+    break_duration = IntegerField('Break Duration (minutes)', validators=[Optional(), NumberRange(min=0, max=180)])
+    notes = TextAreaField('Notes')
+    submit = SubmitField('Save Shift')
+    
+    def validate_end_time(self, end_time):
+        if self.start_time.data and end_time.data:
+            if end_time.data <= self.start_time.data:
+                raise ValidationError('End time must be after start time')

@@ -102,3 +102,51 @@ class Sale(db.Model):
     
     def __repr__(self):
         return f'<Sale {self.id} {self.product.name if self.product else "Unknown"}>'
+
+class Staff(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(120), unique=True)
+    phone = db.Column(db.String(20))
+    position = db.Column(db.String(50), nullable=False)
+    hourly_rate = db.Column(db.Float, default=0.0)
+    hire_date = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(20), default='active')  # 'active' or 'inactive'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    shifts = db.relationship('Shift', backref='staff', lazy=True, cascade="all, delete-orphan")
+    
+    def __repr__(self):
+        return f'<Staff {self.name}>'
+
+class Shift(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    staff_id = db.Column(db.Integer, db.ForeignKey('staff.id'), nullable=False)
+    start_time = db.Column(db.DateTime, nullable=False)
+    end_time = db.Column(db.DateTime, nullable=False)
+    break_duration = db.Column(db.Integer, default=0)  # Break duration in minutes
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    
+    # Relationships
+    user = db.relationship('User', backref='created_shifts')
+    
+    @property
+    def duration(self):
+        """Return the shift duration in hours"""
+        if not self.start_time or not self.end_time:
+            return 0
+        
+        delta = self.end_time - self.start_time
+        hours = delta.total_seconds() / 3600
+        # Subtract break duration in hours
+        if self.break_duration:
+            hours -= self.break_duration / 60
+        return round(hours, 2)
+    
+    def __repr__(self):
+        return f'<Shift {self.id} {self.staff.name if self.staff else "Unknown"} {self.start_time}>'
