@@ -106,17 +106,38 @@ class Sale(db.Model):
 
 class Staff(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(120), nullable=False, unique=True)
-    phone = db.Column(db.String(20))
-    position = db.Column(db.String(50))
-    status = db.Column(db.String(20), default='active')  # active, inactive
-    google_calendar_id = db.Column(db.String(255))  # To store the staff's calendar ID if they have one
+    user_id = db.Column(db.Integer, nullable=True)
+    first_name = db.Column(db.String(100), nullable=True)
+    last_name = db.Column(db.String(100), nullable=True)
+    position = db.Column(db.String(50), nullable=True)
+    role = db.Column(db.String(50), nullable=True)
+    phone = db.Column(db.String(20), nullable=True)
+    hourly_rate = db.Column(db.Float, nullable=True)
+    hire_date = db.Column(db.Date, nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
+    color = db.Column(db.String(20), nullable=True)  # For calendar display
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
     shifts = db.relationship('Shift', backref='staff', lazy=True)
+    
+    @property
+    def name(self):
+        """Combined name property"""
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        elif self.first_name:
+            return self.first_name
+        elif self.last_name:
+            return self.last_name
+        else:
+            return f"Staff #{self.id}"
+            
+    @property
+    def status(self):
+        """Status property for compatibility with templates"""
+        return "active" if self.is_active else "inactive"
     
     def __repr__(self):
         return f'<Staff {self.name}>'
@@ -126,8 +147,8 @@ class Staff(db.Model):
         return {
             'id': self.id,
             'name': self.name,
-            'email': self.email,
             'position': self.position,
+            'role': self.role,
             'status': self.status
         }
 
@@ -136,26 +157,57 @@ class Shift(db.Model):
     staff_id = db.Column(db.Integer, db.ForeignKey('staff.id'), nullable=False)
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime, nullable=False)
-    location = db.Column(db.String(100), default='Main Store')
-    shift_type = db.Column(db.String(50))  # opening, closing, mid-day, etc.
-    status = db.Column(db.String(20), default='scheduled')  # scheduled, completed, canceled
-    notes = db.Column(db.Text)
-    google_event_id = db.Column(db.String(255))  # To store the Google Calendar event ID
-    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    title = db.Column(db.String(100), nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+    is_recurring = db.Column(db.Boolean, default=False)
+    recurring_days = db.Column(db.String(100), nullable=True)  # Comma-separated days (e.g., "0,1,4" for Mon,Tue,Fri)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # User relationship
-    user = db.relationship('User', backref='created_shifts')
-    
     def __repr__(self):
         return f'<Shift {self.id} for {self.staff.name if self.staff else "Unknown"}>'
+    
+    @property
+    def shift_type(self):
+        """Derive shift type from title or time of day"""
+        if self.title and 'opening' in self.title.lower():
+            return 'opening'
+        elif self.title and 'closing' in self.title.lower():
+            return 'closing'
+        elif self.title and 'special' in self.title.lower():
+            return 'special'
+        # Determine by time
+        if self.start_time:
+            hour = self.start_time.hour
+            if hour < 10:
+                return 'opening'
+            elif hour >= 15:
+                return 'closing'
+            else:
+                return 'mid-day'
+        return 'mid-day'  # Default
+    
+    @property
+    def location(self):
+        """Default location"""
+        return 'Main Store'
+    
+    @property
+    def status(self):
+        """Determine status based on time"""
+        now = datetime.utcnow()
+        if self.end_time < now:
+            return 'completed'
+        elif self.start_time > now:
+            return 'scheduled'
+        else:
+            return 'in-progress'
     
     def to_dict(self):
         """Convert shift object to dictionary for calendar events"""
         return {
             'id': self.id,
-            'title': f"{self.staff.name} - {self.shift_type}" if self.staff else f"Shift - {self.shift_type}",
+            'title': self.title or f"{self.staff.name if self.staff else 'Staff'} - {self.shift_type.capitalize()} Shift",
             'start': self.start_time.isoformat(),
             'end': self.end_time.isoformat(),
             'location': self.location,
@@ -163,5 +215,6 @@ class Shift(db.Model):
             'type': self.shift_type,
             'notes': self.notes,
             'staff_id': self.staff_id,
-            'staff_name': self.staff.name if self.staff else "Unknown"
+            'staff_name': self.staff.name if self.staff else "Unknown",
+            'recurring': self.is_recurring
         }

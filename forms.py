@@ -107,17 +107,11 @@ class ShiftForm(FlaskForm):
     staff_id = SelectField('Staff Member', coerce=int, validators=[DataRequired()])
     start_time = DateTimeField('Start Time', format='%Y-%m-%d %H:%M', validators=[DataRequired()])
     end_time = DateTimeField('End Time', format='%Y-%m-%d %H:%M', validators=[DataRequired()])
-    location = StringField('Location', validators=[DataRequired(), Length(max=100)])
     shift_type = SelectField('Shift Type', choices=[
         ('opening', 'Opening'),
         ('mid-day', 'Mid-Day'),
         ('closing', 'Closing'),
         ('special', 'Special Event')
-    ], validators=[DataRequired()])
-    status = SelectField('Status', choices=[
-        ('scheduled', 'Scheduled'),
-        ('completed', 'Completed'),
-        ('canceled', 'Canceled')
     ], validators=[DataRequired()])
     notes = TextAreaField('Notes')
     submit = SubmitField('Save Shift')
