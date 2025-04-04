@@ -87,21 +87,14 @@ class SalesUploadForm(FlaskForm):
 
 class StaffForm(FlaskForm):
     name = StringField('Full Name', validators=[DataRequired(), Length(max=100)])
-    email = EmailField('Email', validators=[DataRequired(), Email(), Length(max=120)])
     phone = StringField('Phone Number', validators=[Length(max=20)])
     position = StringField('Position/Role', validators=[DataRequired(), Length(max=50)])
     status = SelectField('Status', choices=[
         ('active', 'Active'), 
         ('inactive', 'Inactive')
     ], validators=[DataRequired()])
-    google_calendar_id = StringField('Google Calendar ID', validators=[Optional(), Length(max=255)])
     notes = TextAreaField('Notes')
     submit = SubmitField('Save Staff Member')
-    
-    def validate_email(self, email):
-        staff = Staff.query.filter_by(email=email.data).first()
-        if staff and (not hasattr(self, 'id') or staff.id != self.id.data):
-            raise ValidationError('This email address is already registered to another staff member.')
 
 class ShiftForm(FlaskForm):
     staff_id = SelectField('Staff Member', coerce=int, validators=[DataRequired()])

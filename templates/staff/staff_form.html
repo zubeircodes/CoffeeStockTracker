@@ -27,16 +27,6 @@
                     
                     <div class="col-md-6">
                         <div class="form-group mb-3">
-                            {{ form.email.label(class="form-label") }}
-                            {{ form.email(class="form-control") }}
-                            {% for error in form.email.errors %}
-                            <span class="text-danger">{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <div class="form-group mb-3">
                             {{ form.phone.label(class="form-label") }}
                             {{ form.phone(class="form-control") }}
                             {% for error in form.phone.errors %}
@@ -60,17 +50,6 @@
                             {{ form.status.label(class="form-label") }}
                             {{ form.status(class="form-select") }}
                             {% for error in form.status.errors %}
-                            <span class="text-danger">{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <div class="form-group mb-3">
-                            {{ form.google_calendar_id.label(class="form-label") }}
-                            {{ form.google_calendar_id(class="form-control") }}
-                            <small class="form-text text-muted">Optional: Personal Google Calendar ID for integration</small>
-                            {% for error in form.google_calendar_id.errors %}
                             <span class="text-danger">{{ error }}</span>
                             {% endfor %}
                         </div>
