@@ -1,9 +1,9 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField
-from wtforms import SelectField, FloatField, HiddenField, DateField, EmailField, DateTimeField
+from wtforms import SelectField, FloatField, HiddenField, DateField, EmailField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional, ValidationError
-from models import User, Product, Vendor, Staff
+from models import User, Product, Vendor
 
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -84,27 +84,3 @@ class SalesUploadForm(FlaskForm):
         FileAllowed(['csv'], 'CSV files only!')
     ])
     submit = SubmitField('Upload Sales Data')
-
-class StaffForm(FlaskForm):
-    name = StringField('Full Name', validators=[DataRequired(), Length(max=100)])
-    phone = StringField('Phone Number', validators=[Length(max=20)])
-    position = StringField('Position/Role', validators=[DataRequired(), Length(max=50)])
-    status = SelectField('Status', choices=[
-        ('active', 'Active'), 
-        ('inactive', 'Inactive')
-    ], validators=[DataRequired()])
-    notes = TextAreaField('Notes')
-    submit = SubmitField('Save Staff Member')
-
-class ShiftForm(FlaskForm):
-    staff_id = SelectField('Staff Member', coerce=int, validators=[DataRequired()])
-    start_time = DateTimeField('Start Time', format='%Y-%m-%d %H:%M', validators=[DataRequired()])
-    end_time = DateTimeField('End Time', format='%Y-%m-%d %H:%M', validators=[DataRequired()])
-    shift_type = SelectField('Shift Type', choices=[
-        ('opening', 'Opening'),
-        ('mid-day', 'Mid-Day'),
-        ('closing', 'Closing'),
-        ('special', 'Special Event')
-    ], validators=[DataRequired()])
-    notes = TextAreaField('Notes')
-    submit = SubmitField('Save Shift')
