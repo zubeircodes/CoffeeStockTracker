@@ -134,13 +134,46 @@ def create_shift():
     form.staff_id.choices = [(s.id, s.name) for s in Staff.query.filter_by(is_active=True).order_by(Staff.first_name, Staff.last_name)]
     
     if form.validate_on_submit():
+        # Validate date and time fields
+        if not form.start_date.data or not form.start_time.data or not form.end_time.data:
+            flash('Please fill in all date and time fields.', 'danger')
+            return render_template('staff/shift_form.html', form=form, title='Add Shift')
+            
+        # Combine date and time fields
+        start_datetime = datetime.combine(form.start_date.data, form.start_time.data)
+        end_datetime = datetime.combine(form.start_date.data, form.end_time.data)
+        
+        # If end time is earlier than start time, it must be the next day
+        if end_datetime <= start_datetime:
+            end_datetime = end_datetime + timedelta(days=1)
+        
+        # Build recurring days string from checkbox fields
+        recurring_days = []
+        if form.is_recurring.data:
+            if form.monday.data:
+                recurring_days.append('Mon')
+            if form.tuesday.data:
+                recurring_days.append('Tue')
+            if form.wednesday.data:
+                recurring_days.append('Wed')
+            if form.thursday.data:
+                recurring_days.append('Thu')
+            if form.friday.data:
+                recurring_days.append('Fri')
+            if form.saturday.data:
+                recurring_days.append('Sat')
+            if form.sunday.data:
+                recurring_days.append('Sun')
+        
+        recurring_days_str = ','.join(recurring_days) if recurring_days else ''
+        
         shift = Shift(
             staff_id=form.staff_id.data,
             title=form.title.data,
-            start_time=form.start_time.data,
-            end_time=form.end_time.data,
+            start_time=start_datetime,
+            end_time=end_datetime,
             is_recurring=form.is_recurring.data,
-            recurring_days=form.recurring_days.data,
+            recurring_days=recurring_days_str,
             notes=form.notes.data
         )
         db.session.add(shift)
@@ -165,19 +198,68 @@ def edit_shift(id):
     if request.method == 'GET':
         form.staff_id.data = shift.staff_id
         form.title.data = shift.title
-        form.start_time.data = shift.start_time
-        form.end_time.data = shift.end_time
+        
+        # Split datetime into date and time components
+        form.start_date.data = shift.start_time.date()
+        form.start_time.data = shift.start_time.time()
+        form.end_time.data = shift.end_time.time()
+        
+        # Set recurring fields
         form.is_recurring.data = shift.is_recurring
-        form.recurring_days.data = shift.recurring_days
+        
+        # Set individual day checkboxes based on recurring_days string
+        if shift.recurring_days:
+            days = shift.recurring_days.split(',')
+            form.monday.data = 'Mon' in days
+            form.tuesday.data = 'Tue' in days
+            form.wednesday.data = 'Wed' in days
+            form.thursday.data = 'Thu' in days
+            form.friday.data = 'Fri' in days
+            form.saturday.data = 'Sat' in days
+            form.sunday.data = 'Sun' in days
+            
         form.notes.data = shift.notes
     
     if form.validate_on_submit():
+        # Validate date and time fields
+        if not form.start_date.data or not form.start_time.data or not form.end_time.data:
+            flash('Please fill in all date and time fields.', 'danger')
+            return render_template('staff/shift_form.html', form=form, shift=shift, title='Edit Shift')
+            
+        # Combine date and time fields
+        start_datetime = datetime.combine(form.start_date.data, form.start_time.data)
+        end_datetime = datetime.combine(form.start_date.data, form.end_time.data)
+        
+        # If end time is earlier than start time, it must be the next day
+        if end_datetime <= start_datetime:
+            end_datetime = end_datetime + timedelta(days=1)
+        
+        # Build recurring days string from checkbox fields
+        recurring_days = []
+        if form.is_recurring.data:
+            if form.monday.data:
+                recurring_days.append('Mon')
+            if form.tuesday.data:
+                recurring_days.append('Tue')
+            if form.wednesday.data:
+                recurring_days.append('Wed')
+            if form.thursday.data:
+                recurring_days.append('Thu')
+            if form.friday.data:
+                recurring_days.append('Fri')
+            if form.saturday.data:
+                recurring_days.append('Sat')
+            if form.sunday.data:
+                recurring_days.append('Sun')
+        
+        recurring_days_str = ','.join(recurring_days) if recurring_days else ''
+        
         shift.staff_id = form.staff_id.data
         shift.title = form.title.data
-        shift.start_time = form.start_time.data
-        shift.end_time = form.end_time.data
+        shift.start_time = start_datetime
+        shift.end_time = end_datetime
         shift.is_recurring = form.is_recurring.data
-        shift.recurring_days = form.recurring_days.data
+        shift.recurring_days = recurring_days_str
         shift.notes = form.notes.data
         shift.updated_at = datetime.utcnow()
         

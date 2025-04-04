@@ -3,7 +3,33 @@ from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField
 from wtforms import SelectField, FloatField, HiddenField, DateField, EmailField, DateTimeField, IntegerField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional, ValidationError, NumberRange
+from wtforms.fields import Field
+from datetime import time
 from models import User, Product, Vendor, Staff
+
+# Create a custom TimeField class
+class TimeField(StringField):
+    def __init__(self, label=None, validators=None, format='%H:%M', **kwargs):
+        super(TimeField, self).__init__(label, validators, **kwargs)
+        self.format = format
+    
+    def _value(self):
+        if self.data:
+            return self.data.strftime(self.format)
+        return ''
+    
+    def process_formdata(self, valuelist):
+        if valuelist:
+            time_str = valuelist[0]
+            try:
+                parts = time_str.split(':')
+                if len(parts) >= 2:
+                    self.data = time(int(parts[0]), int(parts[1]))
+                else:
+                    self.data = None
+            except ValueError:
+                self.data = None
+                raise ValueError(f'Not a valid time: {time_str}')
 
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -114,10 +140,23 @@ class StaffForm(FlaskForm):
 class ShiftForm(FlaskForm):
     staff_id = SelectField('Staff Member', coerce=int, validators=[DataRequired()])
     title = StringField('Shift Title', validators=[Length(max=100)])
-    start_time = DateTimeField('Start Time', format='%Y-%m-%d %H:%M', validators=[DataRequired()])
-    end_time = DateTimeField('End Time', format='%Y-%m-%d %H:%M', validators=[DataRequired()])
+    
+    # Separate date and time inputs
+    start_date = DateField('Start Date', format='%Y-%m-%d', validators=[DataRequired()])
+    start_time = TimeField('Start Time', format='%H:%M', validators=[DataRequired()])
+    end_time = TimeField('End Time', format='%H:%M', validators=[DataRequired()])
+    
+    # Recurring options
     is_recurring = BooleanField('Recurring Shift')
-    recurring_days = StringField('Recurring Days (e.g., Mon,Wed,Fri)', validators=[Optional(), Length(max=100)])
+    monday = BooleanField('Monday')
+    tuesday = BooleanField('Tuesday')
+    wednesday = BooleanField('Wednesday')
+    thursday = BooleanField('Thursday')
+    friday = BooleanField('Friday')
+    saturday = BooleanField('Saturday')
+    sunday = BooleanField('Sunday')
+    end_date = DateField('End Date (Optional)', format='%Y-%m-%d', validators=[Optional()])
+    
     notes = TextAreaField('Notes')
     submit = SubmitField('Save Shift')
     
