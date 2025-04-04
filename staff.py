@@ -126,11 +126,20 @@ def google_calendar():
     
     try:
         # Get calendar service
+        current_app.logger.debug("Attempting to get Google Calendar service")
         service = get_calendar_service()
         
         # If no service, we need authorization but don't redirect automatically
         if service is None:
             current_app.logger.debug("No Google Calendar service available - authentication required")
+            # Debug information about the OAuth configuration
+            domain = os.environ.get('REPLIT_DEV_DOMAIN', 'unknown')
+            current_app.logger.debug(f"REPLIT_DEV_DOMAIN: {domain}")
+            redirect_uri = url_for('google_auth.callback', _external=True, _scheme='https')
+            current_app.logger.debug(f"OAuth redirect URI would be: {redirect_uri}")
+            current_app.logger.debug(f"CLIENT_ID exists: {bool(os.environ.get('GOOGLE_OAUTH_CLIENT_ID'))}")
+            current_app.logger.debug(f"CLIENT_SECRET exists: {bool(os.environ.get('GOOGLE_OAUTH_CLIENT_SECRET'))}")
+            
             error_message = "You need to connect your Google Calendar account to view and manage your calendar."
             return render_template(
                 'staff/google_calendar.html',

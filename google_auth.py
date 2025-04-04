@@ -21,9 +21,25 @@ PROJECT_ID = os.environ.get('GOOGLE_PROJECT_ID')
 
 # Function to get the Replit domain for callback URL
 def get_replit_domain():
-    domain = os.environ.get('REPLIT_SLUG', '') + '.' + os.environ.get('REPLIT_DOMAIN', '')
-    current_app.logger.debug(f"Using Replit domain: {domain}")
-    return domain
+    """Get the full Replit domain for the current environment.
+    In development mode, use REPLIT_DEV_DOMAIN.
+    """
+    # First try REPLIT_DEV_DOMAIN which is more reliable for dev environments
+    if 'REPLIT_DEV_DOMAIN' in os.environ:
+        domain = os.environ['REPLIT_DEV_DOMAIN']
+        current_app.logger.debug(f"Using Replit dev domain: {domain}")
+        return domain
+    # Fallback to constructing from SLUG and DOMAIN
+    elif 'REPLIT_SLUG' in os.environ and 'REPLIT_DOMAIN' in os.environ:
+        domain = os.environ.get('REPLIT_SLUG', '') + '.' + os.environ.get('REPLIT_DOMAIN', '')
+        current_app.logger.debug(f"Using constructed Replit domain: {domain}")
+        return domain
+    # Last resort fallback
+    else:
+        # Get the host from the request
+        domain = request.host
+        current_app.logger.debug(f"Using request host: {domain}")
+        return domain
 
 # Create Blueprint
 google_auth_bp = Blueprint('google_auth', __name__)
@@ -160,7 +176,13 @@ def callback():
         )
         
         # Exchange authorization code for credentials
-        flow.fetch_token(authorization_response=request.url)
+        # Ensure the authorization response URL is https
+        authorization_response = request.url
+        if authorization_response.startswith('http:'):
+            authorization_response = authorization_response.replace('http:', 'https:', 1)
+            current_app.logger.debug(f"Converted authorization URL to https: {authorization_response}")
+        
+        flow.fetch_token(authorization_response=authorization_response)
         
         # Store credentials in session
         credentials = flow.credentials
