@@ -1,7 +1,7 @@
-from datetime import datetime, timedelta, date
-from models import Product, Category, InventoryTransaction, Staff, Shift
+from datetime import datetime, timedelta
+from models import Product, Category, InventoryTransaction
 from app import db
-from sqlalchemy import func, and_, or_, extract
+from sqlalchemy import func
 
 def get_low_stock_products():
     """
@@ -91,39 +91,3 @@ def get_transaction_summary(days=30):
         'usage': usage,
         'adjustments': adjustments
     }
-
-def get_employees_working_today():
-    """
-    Count the number of employees scheduled to work today
-    This counts staff with non-recurring shifts today plus staff with recurring shifts on this day of week
-    """
-    today = date.today()
-    day_of_week = today.strftime('%a')  # Returns 'Mon', 'Tue', etc.
-    
-    # Start and end of today
-    today_start = datetime.combine(today, datetime.min.time())
-    today_end = datetime.combine(today, datetime.max.time())
-    
-    # Query for both non-recurring shifts today and recurring shifts for this day of week
-    shifts_today = Shift.query.filter(
-        or_(
-            # Non-recurring shifts on today's date
-            and_(
-                Shift.start_time >= today_start,
-                Shift.start_time <= today_end,
-                Shift.is_recurring == False
-            ),
-            # Recurring shifts that include this day of week
-            and_(
-                Shift.is_recurring == True,
-                Shift.recurring_days.like(f'%{day_of_week}%')
-            )
-        )
-    ).all()
-    
-    # Get distinct staff IDs scheduled today
-    staff_ids = set()
-    for shift in shifts_today:
-        staff_ids.add(shift.staff_id)
-    
-    return len(staff_ids)
