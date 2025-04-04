@@ -19,4 +19,6 @@ dependencies = [
     "google-auth-httplib2>=0.2.0",
     "google-auth-oauthlib>=1.2.1",
     "google-api-python-client>=2.166.0",
+    "google-auth>=2.38.0",
+    "oauthlib>=3.2.2",
 ]
