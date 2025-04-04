@@ -113,9 +113,11 @@ class StaffForm(FlaskForm):
         
 class ShiftForm(FlaskForm):
     staff_id = SelectField('Staff Member', coerce=int, validators=[DataRequired()])
+    title = StringField('Shift Title', validators=[Length(max=100)])
     start_time = DateTimeField('Start Time', format='%Y-%m-%d %H:%M', validators=[DataRequired()])
     end_time = DateTimeField('End Time', format='%Y-%m-%d %H:%M', validators=[DataRequired()])
-    break_duration = IntegerField('Break Duration (minutes)', validators=[Optional(), NumberRange(min=0, max=180)])
+    is_recurring = BooleanField('Recurring Shift')
+    recurring_days = StringField('Recurring Days (e.g., Mon,Wed,Fri)', validators=[Optional(), Length(max=100)])
     notes = TextAreaField('Notes')
     submit = SubmitField('Save Shift')
     

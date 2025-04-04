@@ -31,17 +31,6 @@
             </div>
             
             <div class="row mb-3">
-              <div class="col-md-12">
-                {{ form.title.label(class="form-label") }}
-                {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else "")) }}
-                {% for error in form.title.errors %}
-                <div class="invalid-feedback">{{ error }}</div>
-                {% endfor %}
-                <div class="form-text">Optional. A descriptive title for this shift.</div>
-              </div>
-            </div>
-            
-            <div class="row mb-3">
               <div class="col-md-6">
                 {{ form.start_time.label(class="form-label") }}
                 {{ form.start_time(class="form-control" + (" is-invalid" if form.start_time.errors else ""), type="datetime-local") }}
@@ -55,6 +44,17 @@
                 {% for error in form.end_time.errors %}
                 <div class="invalid-feedback">{{ error }}</div>
                 {% endfor %}
+              </div>
+            </div>
+            
+            <div class="row mb-3">
+              <div class="col-md-12">
+                {{ form.title.label(class="form-label") }}
+                {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else "")) }}
+                {% for error in form.title.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+                <div class="form-text">Optional. A descriptive title for this shift.</div>
               </div>
             </div>
             

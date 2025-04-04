@@ -144,16 +144,16 @@ class Staff(db.Model):
 class Shift(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     staff_id = db.Column(db.Integer, db.ForeignKey('staff.id'), nullable=False)
+    title = db.Column(db.String(100))
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime, nullable=False)
-    break_duration = db.Column(db.Integer, default=0)  # Break duration in minutes
+    is_recurring = db.Column(db.Boolean, default=False)
+    recurring_days = db.Column(db.String(100))
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     
     # Relationships
-    user = db.relationship('User', backref='created_shifts')
     
     @property
     def duration(self):
@@ -163,9 +163,6 @@ class Shift(db.Model):
         
         delta = self.end_time - self.start_time
         hours = delta.total_seconds() / 3600
-        # Subtract break duration in hours
-        if self.break_duration:
-            hours -= self.break_duration / 60
         return round(hours, 2)
     
     def __repr__(self):

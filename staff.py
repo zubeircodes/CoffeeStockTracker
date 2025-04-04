@@ -136,11 +136,12 @@ def create_shift():
     if form.validate_on_submit():
         shift = Shift(
             staff_id=form.staff_id.data,
+            title=form.title.data,
             start_time=form.start_time.data,
             end_time=form.end_time.data,
-            break_duration=form.break_duration.data or 0,
-            notes=form.notes.data,
-            created_by=current_user.id
+            is_recurring=form.is_recurring.data,
+            recurring_days=form.recurring_days.data,
+            notes=form.notes.data
         )
         db.session.add(shift)
         db.session.commit()
@@ -163,16 +164,20 @@ def edit_shift(id):
     
     if request.method == 'GET':
         form.staff_id.data = shift.staff_id
+        form.title.data = shift.title
         form.start_time.data = shift.start_time
         form.end_time.data = shift.end_time
-        form.break_duration.data = shift.break_duration
+        form.is_recurring.data = shift.is_recurring
+        form.recurring_days.data = shift.recurring_days
         form.notes.data = shift.notes
     
     if form.validate_on_submit():
         shift.staff_id = form.staff_id.data
+        shift.title = form.title.data
         shift.start_time = form.start_time.data
         shift.end_time = form.end_time.data
-        shift.break_duration = form.break_duration.data or 0
+        shift.is_recurring = form.is_recurring.data
+        shift.recurring_days = form.recurring_days.data
         shift.notes = form.notes.data
         shift.updated_at = datetime.utcnow()
         
@@ -235,9 +240,12 @@ def schedule_data():
         # Use staff's custom color if available, otherwise use position color
         color = shift.staff.color if shift.staff and shift.staff.color else staff_colors.get(position, '#6c757d')
         
+        # Use shift title if available, otherwise use staff name and position
+        display_title = shift.title if shift.title else f"{shift.staff.name} ({shift.staff.position.capitalize() if shift.staff and shift.staff.position else 'Staff'})"
+        
         events.append({
             'id': shift.id,
-            'title': f"{shift.staff.name} ({shift.staff.position.capitalize() if shift.staff and shift.staff.position else 'Staff'})",
+            'title': display_title,
             'start': shift.start_time.isoformat(),
             'end': shift.end_time.isoformat(),
             'color': color,
@@ -246,7 +254,8 @@ def schedule_data():
                 'staffName': shift.staff.name,
                 'position': position,
                 'notes': shift.notes,
-                'breakDuration': shift.break_duration,
+                'isRecurring': shift.is_recurring,
+                'recurringDays': shift.recurring_days,
                 'duration': shift.duration
             }
         })
