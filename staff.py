@@ -102,6 +102,31 @@ def shift_calendar():
     """Display shift calendar"""
     staff_members = Staff.query.filter_by(is_active=True).all()
     return render_template('staff/shift_calendar.html', staff=staff_members, title='Staff Schedule')
+    
+@staff_bp.route('/google-calendar')
+@login_required
+def google_calendar():
+    """Display Google Calendar"""
+    try:
+        # Get calendar service
+        service = get_calendar_service()
+        # Get events for the next 30 days
+        now = datetime.now()
+        end_date = now + timedelta(days=30)
+        events = get_events(service, time_min=now, time_max=end_date)
+        
+        # Get staff members for the filter
+        staff_members = Staff.query.filter_by(is_active=True).all()
+        
+        return render_template(
+            'staff/google_calendar.html', 
+            events=events, 
+            staff=staff_members, 
+            title='Google Calendar View'
+        )
+    except Exception as e:
+        flash(f'Could not load Google Calendar: {str(e)}', 'danger')
+        return redirect(url_for('staff.shift_calendar'))
 
 @staff_bp.route('/shifts/add', methods=['GET', 'POST'])
 @login_required

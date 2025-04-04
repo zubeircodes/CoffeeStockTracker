@@ -10,9 +10,14 @@
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>{% if shift %}Edit{% else %}Add{% endif %} Shift</h1>
-        <a href="{{ url_for('staff.shift_calendar') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Calendar
-        </a>
+        <div>
+            <a href="{{ url_for('staff.shift_calendar') }}" class="btn btn-outline-info">
+                <i class="fas fa-calendar-alt"></i> Shift Calendar
+            </a>
+            <a href="{{ url_for('staff.google_calendar') }}" class="btn btn-outline-secondary">
+                <i class="fab fa-google"></i> Google Calendar
+            </a>
+        </div>
     </div>
 
     <div class="card shadow">
