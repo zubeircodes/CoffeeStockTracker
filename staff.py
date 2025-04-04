@@ -166,15 +166,22 @@ def google_calendar():
                     break
                     
             current_app.logger.debug(f"Using calendar ID: {calendar_id}")
+            
+            # Create the embed URL for the iframe
+            calendar_embed_url = f"https://calendar.google.com/calendar/embed?src={calendar_id}&ctz=local&mode=WEEK&showPrint=0&showTabs=1&showCalendars=1&showTitle=0"
+            current_app.logger.debug(f"Calendar embed URL: {calendar_embed_url}")
+            
         except Exception as cal_error:
             current_app.logger.error(f"Error getting calendar list: {str(cal_error)}")
             calendar_id = 'primary'  # Fall back to primary calendar
+            calendar_embed_url = f"https://calendar.google.com/calendar/embed?src={calendar_id}&ctz=local&mode=WEEK&showPrint=0&showTabs=1&showCalendars=1&showTitle=0"
         
         return render_template(
             'staff/google_calendar.html',
             events=events,
             staff=staff_members,
             calendar_id=calendar_id,
+            calendar_embed_url=calendar_embed_url,
             title='Google Calendar View'
         )
     

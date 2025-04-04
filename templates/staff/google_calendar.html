@@ -36,14 +36,25 @@
                         </a>
                     </div>
                     {% else %}
-                    <div class="embed-responsive" style="height: 600px;">
-                        <iframe id="google-calendar-frame" 
-                                src="https://calendar.google.com/calendar/embed?src={{ calendar_id|default('primary') }}&ctz=local&mode=WEEK&showPrint=0&showTabs=1&showCalendars=1&showTitle=0" 
+                        {% if 'credentials' in session %}
+                        <div class="embed-responsive" style="height: 600px;">
+                            <!-- Dynamically generated calendar URL -->
+                            <iframe id="google-calendar-frame" 
+                                src="{{ calendar_embed_url|default('https://calendar.google.com/calendar/embed?src=' + calendar_id|default('primary') + '&ctz=local&mode=WEEK&showPrint=0&showTabs=1&showCalendars=1&showTitle=0') }}" 
                                 style="border: 0; width: 100%; height: 100%;" 
                                 frameborder="0" 
                                 scrolling="no">
-                        </iframe>
-                    </div>
+                            </iframe>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning">
+                            <h5><i class="fas fa-exclamation-triangle"></i> Google Calendar Not Connected</h5>
+                            <p>You need to connect your Google Calendar to display it here.</p>
+                            <a href="{{ url_for('google_auth.authorize') }}" class="btn btn-primary mt-2">
+                                <i class="fab fa-google"></i> Connect Google Calendar
+                            </a>
+                        </div>
+                        {% endif %}
                     {% endif %}
                     
                     <!-- Instructions for users -->
