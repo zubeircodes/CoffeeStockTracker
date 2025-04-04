@@ -107,14 +107,38 @@ def shift_calendar():
 @login_required
 def google_calendar():
     """Display Google Calendar"""
+    import os
+    
+    # Get staff members for the filter
+    staff_members = Staff.query.filter_by(is_active=True).all()
+    
+    # Check if credentials exist in the environment
+    if not os.environ.get('GOOGLE_CLIENT_ID') or not os.environ.get('GOOGLE_CLIENT_SECRET'):
+        current_app.logger.error("Google OAuth credentials not configured in environment")
+        error_message = "Google Calendar integration is not properly configured. Missing API credentials."
+        return render_template(
+            'staff/google_calendar.html',
+            error=error_message,
+            events=[],
+            staff=staff_members,
+            title='Google Calendar View'
+        )
+    
     try:
         # Get calendar service
         service = get_calendar_service()
         
-        # If no service, redirect to authorization
+        # If no service, we need authorization but don't redirect automatically
         if service is None:
-            flash('Please authorize access to Google Calendar', 'info')
-            return redirect(url_for('google_auth.authorize'))
+            current_app.logger.debug("No Google Calendar service available - authentication required")
+            error_message = "You need to connect your Google Calendar account to view and manage your calendar."
+            return render_template(
+                'staff/google_calendar.html',
+                error=error_message,
+                events=[],
+                staff=staff_members,
+                title='Google Calendar View'
+            )
         
         # Get events for the next 30 days
         now = datetime.now()
@@ -122,29 +146,39 @@ def google_calendar():
         events = get_events(service, time_min=now, time_max=end_date)
         
         # Get calendar ID (usually 'primary' or the user's email address)
-        calendar_list = service.calendarList().list().execute()
-        calendar_id = 'primary'  # Default to primary calendar
-        
-        # Find the primary calendar or use the first one if primary not found
-        for calendar in calendar_list.get('items', []):
-            if calendar.get('primary'):
-                calendar_id = calendar.get('id')
-                break
-        
-        # Get staff members for the filter
-        staff_members = Staff.query.filter_by(is_active=True).all()
+        try:
+            calendar_list = service.calendarList().list().execute()
+            calendar_id = 'primary'  # Default to primary calendar
+            
+            # Find the primary calendar or use the first one if primary not found
+            for calendar in calendar_list.get('items', []):
+                if calendar.get('primary'):
+                    calendar_id = calendar.get('id')
+                    break
+                    
+            current_app.logger.debug(f"Using calendar ID: {calendar_id}")
+        except Exception as cal_error:
+            current_app.logger.error(f"Error getting calendar list: {str(cal_error)}")
+            calendar_id = 'primary'  # Fall back to primary calendar
         
         return render_template(
-            'staff/google_calendar.html', 
-            events=events, 
-            staff=staff_members, 
+            'staff/google_calendar.html',
+            events=events,
+            staff=staff_members,
             calendar_id=calendar_id,
             title='Google Calendar View'
         )
+    
     except Exception as e:
-        flash(f'Could not load Google Calendar: {str(e)}', 'danger')
-        current_app.logger.error(f"Google Calendar error: {str(e)}")
-        return redirect(url_for('staff.shift_calendar'))
+        current_app.logger.error(f"Error accessing Google Calendar: {str(e)}")
+        error_message = f"Unable to connect to Google Calendar: {str(e)}"
+        return render_template(
+            'staff/google_calendar.html',
+            error=error_message,
+            events=[],
+            staff=staff_members,
+            title='Google Calendar View'
+        )
 
 @staff_bp.route('/shifts/add', methods=['GET', 'POST'])
 @login_required

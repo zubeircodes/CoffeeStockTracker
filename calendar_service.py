@@ -12,32 +12,11 @@ from googleapiclient.discovery import build
 # Configuration for Google Calendar API
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 TOKEN_PATH = 'token.pickle'
-CREDENTIALS_PATH = 'credentials.json'
 
-# Check if credentials file exists, if not create it from environment variables
-if not os.path.exists(CREDENTIALS_PATH):
-    # Get credentials from environment variables
-    client_id = os.environ.get('GOOGLE_CLIENT_ID')
-    client_secret = os.environ.get('GOOGLE_CLIENT_SECRET')
-    project_id = os.environ.get('GOOGLE_PROJECT_ID')
-    
-    if client_id and client_secret and project_id:
-        # Create credentials JSON
-        credentials_data = {
-            "web": {
-                "client_id": client_id,
-                "project_id": project_id,
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token",
-                "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-                "client_secret": client_secret,
-                "redirect_uris": [f"https://{os.environ.get('REPLIT_SLUG')}.{os.environ.get('REPLIT_DOMAIN')}/google_auth/callback"]
-            }
-        }
-        
-        # Write credentials to file
-        with open(CREDENTIALS_PATH, 'w') as f:
-            json.dump(credentials_data, f)
+# Google OAuth credentials from environment
+CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
+CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
+PROJECT_ID = os.environ.get('GOOGLE_PROJECT_ID')
 
 def get_calendar_service():
     """

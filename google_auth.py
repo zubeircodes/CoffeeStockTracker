@@ -13,11 +13,17 @@ from googleapiclient.discovery import build
 # Configuration
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 TOKEN_PATH = 'token.pickle'
-CREDENTIALS_PATH = 'credentials.json'
 
-# Set up environment variables and secrets
+# Get Google OAuth credentials directly from environment
+CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
+CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
+PROJECT_ID = os.environ.get('GOOGLE_PROJECT_ID')
+
+# Function to get the Replit domain for callback URL
 def get_replit_domain():
-    return os.environ.get('REPLIT_SLUG', '') + '.' + os.environ.get('REPLIT_DOMAIN', '')
+    domain = os.environ.get('REPLIT_SLUG', '') + '.' + os.environ.get('REPLIT_DOMAIN', '')
+    current_app.logger.debug(f"Using Replit domain: {domain}")
+    return domain
 
 # Create Blueprint
 google_auth_bp = Blueprint('google_auth', __name__)
@@ -59,27 +65,36 @@ def get_calendar_service_web():
 def authorize():
     """Start the OAuth 2.0 authorization flow."""
     try:
-        # Get credentials from file or environment variables
-        client_config = {}
-        if os.path.exists(CREDENTIALS_PATH):
-            with open(CREDENTIALS_PATH, 'r') as f:
-                client_config = json.load(f)
+        # Check if we have the necessary credentials
+        if not CLIENT_ID or not CLIENT_SECRET:
+            current_app.logger.error("Google OAuth credentials not found in environment variables")
+            flash('Google OAuth credentials not configured. Please contact the administrator.', 'danger')
+            return redirect(url_for('staff.shift_calendar'))
         
-        # Replace environment variables in redirect_uris
-        if 'web' in client_config and 'redirect_uris' in client_config['web']:
-            new_uris = []
-            for uri in client_config['web']['redirect_uris']:
-                if '$REPLIT_DOMAIN' in uri:
-                    domain = get_replit_domain()
-                    uri = uri.replace('$REPLIT_DOMAIN', domain)
-                new_uris.append(uri)
-            client_config['web']['redirect_uris'] = new_uris
+        # Create client config dictionary directly from environment variables
+        client_config = {
+            "web": {
+                "client_id": CLIENT_ID,
+                "project_id": PROJECT_ID,
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+                "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                "client_secret": CLIENT_SECRET,
+                "redirect_uris": [
+                    url_for('google_auth.callback', _external=True, _scheme='https')
+                ]
+            }
+        }
+        
+        # Log domain and redirect URI for debugging
+        redirect_uri = url_for('google_auth.callback', _external=True, _scheme='https')
+        current_app.logger.debug(f"OAuth redirect URI: {redirect_uri}")
         
         # Create the flow
         flow = Flow.from_client_config(
             client_config,
             scopes=SCOPES,
-            redirect_uri=url_for('google_auth.callback', _external=True, _scheme='https')
+            redirect_uri=redirect_uri
         )
         
         # Generate authorization URL
@@ -110,28 +125,38 @@ def callback():
         if state is None or state != request.args.get('state', None):
             flash('Authentication failed: Invalid state parameter', 'danger')
             return redirect(url_for('staff.shift_calendar'))
+            
+        # Check if we have the necessary credentials
+        if not CLIENT_ID or not CLIENT_SECRET:
+            current_app.logger.error("Google OAuth credentials not found in environment variables")
+            flash('Google OAuth credentials not configured. Please contact the administrator.', 'danger')
+            return redirect(url_for('staff.shift_calendar'))
         
-        # Get credentials from file or environment variables
-        client_config = {}
-        if os.path.exists(CREDENTIALS_PATH):
-            with open(CREDENTIALS_PATH, 'r') as f:
-                client_config = json.load(f)
+        # Create client config dictionary directly from environment variables
+        client_config = {
+            "web": {
+                "client_id": CLIENT_ID,
+                "project_id": PROJECT_ID,
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+                "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                "client_secret": CLIENT_SECRET,
+                "redirect_uris": [
+                    url_for('google_auth.callback', _external=True, _scheme='https')
+                ]
+            }
+        }
         
-        # Replace environment variables in redirect_uris
-        if 'web' in client_config and 'redirect_uris' in client_config['web']:
-            new_uris = []
-            for uri in client_config['web']['redirect_uris']:
-                if '$REPLIT_DOMAIN' in uri:
-                    domain = get_replit_domain()
-                    uri = uri.replace('$REPLIT_DOMAIN', domain)
-                new_uris.append(uri)
-            client_config['web']['redirect_uris'] = new_uris
+        # Log callback URL for debugging
+        redirect_uri = url_for('google_auth.callback', _external=True, _scheme='https')
+        current_app.logger.debug(f"OAuth callback URI: {redirect_uri}")
+        current_app.logger.debug(f"Authorization response URL: {request.url}")
         
         # Create the flow
         flow = Flow.from_client_config(
             client_config,
             scopes=SCOPES,
-            redirect_uri=url_for('google_auth.callback', _external=True, _scheme='https')
+            redirect_uri=redirect_uri
         )
         
         # Exchange authorization code for credentials
