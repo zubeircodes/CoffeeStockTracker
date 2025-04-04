@@ -3,9 +3,10 @@ import pickle
 import json
 import datetime
 from pathlib import Path
+from flask import session, current_app, redirect, url_for
 
 from google.auth.transport.requests import Request
-from google_auth_oauthlib.flow import Flow
+from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
 # Configuration for Google Calendar API
@@ -23,14 +24,14 @@ if not os.path.exists(CREDENTIALS_PATH):
     if client_id and client_secret and project_id:
         # Create credentials JSON
         credentials_data = {
-            "installed": {
+            "web": {
                 "client_id": client_id,
                 "project_id": project_id,
                 "auth_uri": "https://accounts.google.com/o/oauth2/auth",
                 "token_uri": "https://oauth2.googleapis.com/token",
                 "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
                 "client_secret": client_secret,
-                "redirect_uris": ["urn:ietf:wg:oauth:2.0:oob"]
+                "redirect_uris": [f"https://{os.environ.get('REPLIT_SLUG')}.{os.environ.get('REPLIT_DOMAIN')}/google_auth/callback"]
             }
         }
         
@@ -41,47 +42,68 @@ if not os.path.exists(CREDENTIALS_PATH):
 def get_calendar_service():
     """
     Get an authorized Google Calendar service object.
-    If there are no valid credentials available, this will trigger the OAuth flow.
+    For web applications, this will check the session for credentials first.
+    If not found or invalid, it returns None to trigger authentication flow.
     
     Returns:
-        A Google Calendar API service object.
+        A Google Calendar API service object or None if authentication is needed.
     """
-    creds = None
-    
-    # Try to load saved token
-    if os.path.exists(TOKEN_PATH):
-        with open(TOKEN_PATH, 'rb') as token:
-            creds = pickle.load(token)
-    
-    # If credentials are not valid, refresh or request new ones
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
+    # First check if we have credentials in the session (web flow)
+    if 'credentials' in session:
+        creds_dict = session['credentials']
+        creds = Credentials(
+            token=creds_dict['token'],
+            refresh_token=creds_dict['refresh_token'],
+            token_uri=creds_dict['token_uri'],
+            client_id=creds_dict['client_id'],
+            client_secret=creds_dict['client_secret'],
+            scopes=creds_dict['scopes']
+        )
+        
+        # Refresh token if expired
+        if creds.expired and creds.refresh_token:
             creds.refresh(Request())
-        else:
-            # Need to run OAuth flow
-            if not os.path.exists(CREDENTIALS_PATH):
-                raise FileNotFoundError(
-                    f"No credentials found at {CREDENTIALS_PATH}. Please set up OAuth credentials."
-                )
+            # Update session
+            session['credentials'] = {
+                'token': creds.token,
+                'refresh_token': creds.refresh_token,
+                'token_uri': creds.token_uri,
+                'client_id': creds.client_id,
+                'client_secret': creds.client_secret,
+                'scopes': creds.scopes
+            }
             
-            flow = Flow.from_client_secrets_file(
-                CREDENTIALS_PATH,
-                scopes=SCOPES,
-                redirect_uri='urn:ietf:wg:oauth:2.0:oob'
-            )
-            
-            auth_url, _ = flow.authorization_url(prompt='consent')
-            print(f'Please go to this URL: {auth_url}')
-            
-            code = input('Enter the authorization code: ')
-            flow.fetch_token(code=code)
-            creds = flow.credentials
-            
-            # Save the credentials for the next run
-            with open(TOKEN_PATH, 'wb') as token:
-                pickle.dump(creds, token)
+        return build('calendar', 'v3', credentials=creds)
     
-    return build('calendar', 'v3', credentials=creds)
+    # Try to load saved token from file as fallback
+    elif os.path.exists(TOKEN_PATH):
+        try:
+            with open(TOKEN_PATH, 'rb') as token:
+                creds = pickle.load(token)
+            
+            # Refresh token if expired
+            if creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+                # Save back to file
+                with open(TOKEN_PATH, 'wb') as token:
+                    pickle.dump(creds, token)
+                    
+            # Also store in session for future use
+            session['credentials'] = {
+                'token': creds.token,
+                'refresh_token': creds.refresh_token,
+                'token_uri': creds.token_uri,
+                'client_id': creds.client_id,
+                'client_secret': creds.client_secret,
+                'scopes': creds.scopes
+            }
+                
+            return build('calendar', 'v3', credentials=creds)
+        except Exception as e:
+            current_app.logger.error(f"Error loading token: {str(e)}")
+    
+    # No valid credentials found
+    return None
 
 def create_event(service, start_time, end_time, summary, location=None, description=None, attendees=None, timezone='UTC'):
     """

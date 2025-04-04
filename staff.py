@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 import random
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app, session
 from flask_login import login_required, current_user
 
 from app import db
@@ -111,6 +111,11 @@ def google_calendar():
         # Get calendar service
         service = get_calendar_service()
         
+        # If no service, redirect to authorization
+        if service is None:
+            flash('Please authorize access to Google Calendar', 'info')
+            return redirect(url_for('google_auth.authorize'))
+        
         # Get events for the next 30 days
         now = datetime.now()
         end_date = now + timedelta(days=30)
@@ -138,6 +143,7 @@ def google_calendar():
         )
     except Exception as e:
         flash(f'Could not load Google Calendar: {str(e)}', 'danger')
+        current_app.logger.error(f"Google Calendar error: {str(e)}")
         return redirect(url_for('staff.shift_calendar'))
 
 @staff_bp.route('/shifts/add', methods=['GET', 'POST'])
@@ -168,6 +174,13 @@ def create_shift():
             # Get calendar service
             service = get_calendar_service()
             
+            # Check if we need to authenticate first
+            if service is None:
+                flash(f'Shift for {staff.name} has been added. Please authorize Google Calendar to sync shifts.', 'info')
+                # Store the shift ID in session to sync after auth
+                session['pending_shift_sync'] = shift.id
+                return redirect(url_for('google_auth.authorize'))
+            
             # Create event in Google Calendar
             event = create_event(
                 service=service,
@@ -181,6 +194,7 @@ def create_shift():
             flash(f'Shift for {staff.name} has been added and synced to calendar.', 'success')
             
         except Exception as e:
+            current_app.logger.error(f"Calendar sync error: {str(e)}")
             flash(f'Shift added to database, but calendar sync failed: {str(e)}', 'warning')
             
         return redirect(url_for('staff.shift_calendar'))

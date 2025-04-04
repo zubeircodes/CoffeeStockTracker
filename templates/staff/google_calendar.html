@@ -27,6 +27,15 @@
                     </p>
                     
                     <!-- Google Calendar iframe embed -->
+                    {% if error %}
+                    <div class="alert alert-danger">
+                        <h5>Error loading calendar</h5>
+                        <p>{{ error }}</p>
+                        <a href="{{ url_for('google_auth.authorize') }}" class="btn btn-primary mt-2">
+                            <i class="fab fa-google"></i> Reconnect Google Calendar
+                        </a>
+                    </div>
+                    {% else %}
                     <div class="embed-responsive" style="height: 600px;">
                         <iframe id="google-calendar-frame" 
                                 src="https://calendar.google.com/calendar/embed?src={{ calendar_id|default('primary') }}&ctz=local&mode=WEEK&showPrint=0&showTabs=1&showCalendars=1&showTitle=0" 
@@ -35,6 +44,7 @@
                                 scrolling="no">
                         </iframe>
                     </div>
+                    {% endif %}
                     
                     <!-- Instructions for users -->
                     <div class="alert alert-info mt-3">
@@ -45,6 +55,15 @@
                             <li>Check that the calendar service is properly connected</li>
                             <li>Use the "Shift Calendar" view from the menu for a local calendar view</li>
                         </ol>
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('google_auth.authorize') }}" class="btn btn-primary">
+                                <i class="fab fa-google"></i> Connect Google Calendar
+                            </a>
+                            <a href="{{ url_for('google_auth.revoke') }}" class="btn btn-outline-danger">
+                                <i class="fas fa-unlink"></i> Disconnect Calendar
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

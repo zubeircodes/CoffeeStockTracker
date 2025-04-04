@@ -57,6 +57,9 @@ with app.app_context():
     from staff import staff_bp as staff_blueprint
     app.register_blueprint(staff_blueprint)
     
+    from google_auth import google_auth_bp as google_auth_blueprint
+    app.register_blueprint(google_auth_blueprint)
+    
     from routes import main as main_blueprint
     app.register_blueprint(main_blueprint)
     
