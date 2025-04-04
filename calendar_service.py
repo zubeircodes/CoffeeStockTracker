@@ -14,8 +14,8 @@ SCOPES = ['https://www.googleapis.com/auth/calendar']
 TOKEN_PATH = 'token.pickle'
 
 # Google OAuth credentials from environment
-CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
-CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
+CLIENT_ID = os.environ.get('GOOGLE_OAUTH_CLIENT_ID')
+CLIENT_SECRET = os.environ.get('GOOGLE_OAUTH_CLIENT_SECRET')
 PROJECT_ID = os.environ.get('GOOGLE_PROJECT_ID')
 
 def get_calendar_service():

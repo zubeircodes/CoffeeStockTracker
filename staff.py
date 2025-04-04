@@ -113,7 +113,7 @@ def google_calendar():
     staff_members = Staff.query.filter_by(is_active=True).all()
     
     # Check if credentials exist in the environment
-    if not os.environ.get('GOOGLE_CLIENT_ID') or not os.environ.get('GOOGLE_CLIENT_SECRET'):
+    if not os.environ.get('GOOGLE_OAUTH_CLIENT_ID') or not os.environ.get('GOOGLE_OAUTH_CLIENT_SECRET'):
         current_app.logger.error("Google OAuth credentials not configured in environment")
         error_message = "Google Calendar integration is not properly configured. Missing API credentials."
         return render_template(
