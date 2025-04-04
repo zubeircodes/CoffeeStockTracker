@@ -166,9 +166,7 @@ def get_staff_on_duty_today():
     
     # Add staff from recurring shifts
     for shift in recurring_shifts:
-        # Check if the recurring shift has an end date and if today is before that end date
-        if shift.end_date and today > shift.end_date:
-            continue
+        # We don't have an end_date field in the model yet, so we include all recurring shifts
         staff_ids.add(shift.staff_id)
         shifts_today.append(shift)
     
