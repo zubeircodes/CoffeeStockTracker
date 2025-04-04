@@ -110,10 +110,21 @@ def google_calendar():
     try:
         # Get calendar service
         service = get_calendar_service()
+        
         # Get events for the next 30 days
         now = datetime.now()
         end_date = now + timedelta(days=30)
         events = get_events(service, time_min=now, time_max=end_date)
+        
+        # Get calendar ID (usually 'primary' or the user's email address)
+        calendar_list = service.calendarList().list().execute()
+        calendar_id = 'primary'  # Default to primary calendar
+        
+        # Find the primary calendar or use the first one if primary not found
+        for calendar in calendar_list.get('items', []):
+            if calendar.get('primary'):
+                calendar_id = calendar.get('id')
+                break
         
         # Get staff members for the filter
         staff_members = Staff.query.filter_by(is_active=True).all()
@@ -122,6 +133,7 @@ def google_calendar():
             'staff/google_calendar.html', 
             events=events, 
             staff=staff_members, 
+            calendar_id=calendar_id,
             title='Google Calendar View'
         )
     except Exception as e:
