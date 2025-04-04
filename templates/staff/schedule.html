@@ -125,7 +125,7 @@
         <p><strong>Position:</strong> <span id="shiftPosition"></span></p>
         <p><strong>Time:</strong> <span id="shiftTime"></span></p>
         <p><strong>Duration:</strong> <span id="shiftDuration"></span> hours</p>
-        <p><strong>Break:</strong> <span id="shiftBreak"></span></p>
+        <p><strong>Recurring:</strong> <span id="shiftRecurring"></span></p>
         <div id="shiftNotesContainer">
           <p><strong>Notes:</strong></p>
           <p id="shiftNotes" class="border-start ps-2"></p>
@@ -208,7 +208,7 @@
         
         document.getElementById('shiftTime').textContent = timeStr;
         document.getElementById('shiftDuration').textContent = props.duration;
-        document.getElementById('shiftBreak').textContent = props.breakDuration ? props.breakDuration + ' minutes' : 'None';
+        document.getElementById('shiftRecurring').textContent = props.isRecurring ? 'Yes (' + (props.recurringDays || 'All days') + ')' : 'No';
         
         var notesContainer = document.getElementById('shiftNotesContainer');
         var notes = document.getElementById('shiftNotes');
