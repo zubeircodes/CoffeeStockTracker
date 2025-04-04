@@ -5,6 +5,7 @@ from app import db
 from sqlalchemy import func, extract
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from utils import get_employees_working_today
 
 main = Blueprint('main', __name__)
 
@@ -30,8 +31,8 @@ def dashboard():
     # Get total product count
     product_count = Product.query.count()
     
-    # Get total vendor count
-    vendor_count = Vendor.query.count()
+    # Get the number of employees working today
+    employees_working = get_employees_working_today()
     
     # Get category distribution
     categories = Category.query.all()
@@ -117,8 +118,9 @@ def dashboard():
                           recent_transactions=recent_transactions,
                           total_value=total_value,
                           product_count=product_count,
-                          vendor_count=vendor_count,
+                          employees_working=employees_working,
                           category_data=category_data,
+                          datetime=datetime,
                           # Revenue data
                           total_revenue=total_revenue,
                           monthly_revenue=monthly_revenue,
